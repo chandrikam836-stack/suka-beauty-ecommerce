@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>My Wishlist – Suka Beauty</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet"/>
+<script src="js/api.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root { --pink:#e8748a; --dark:#1a1a1a; --muted:#777; --light:#fafafa; }
+  body { font-family:'Nunito',sans-serif; background:var(--light); color:var(--dark); }
+  nav { background:#fff; padding:14px 40px; display:flex; align-items:center; justify-content:space-between; border-bottom:2px solid #fce8ec; flex-wrap:wrap; gap:8px 16px; }
+  @media (max-width:480px) { nav { padding:12px 16px; } .nav-right a { margin-left:0; margin-right:14px; white-space:nowrap; } }
+  .logo { font-family:'Playfair Display',serif; font-size:1.4rem; font-weight:700; color:var(--pink); text-decoration:none; }
+  .nav-right a { font-size:0.82rem; color:var(--muted); text-decoration:none; margin-left:18px; font-weight:700; }
+  .wrap { max-width:1100px; margin:0 auto; padding:32px 24px; }
+  h1 { font-family:'Playfair Display',serif; font-size:1.7rem; margin-bottom:20px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:16px; }
+  .card { background:#fff; border-radius:12px; padding:14px; position:relative; box-shadow:0 2px 10px rgba(0,0,0,.04); }
+  .card img { width:100%; aspect-ratio:1; object-fit:cover; border-radius:8px; cursor:pointer; }
+  .card .name { font-size:0.85rem; font-weight:700; margin:10px 0 4px; cursor:pointer; }
+  .card .price { font-weight:800; color:var(--dark); }
+  .remove-btn { position:absolute; top:20px; right:20px; background:#fff; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,.15); }
+  .add-cart { width:100%; margin-top:10px; padding:9px; background:var(--pink); color:#fff; border:none; border-radius:6px; font-weight:800; font-size:0.78rem; cursor:pointer; text-transform:uppercase; }
+  .empty { text-align:center; padding:60px 20px; color:var(--muted); }
+  .empty a { color:var(--pink); font-weight:700; text-decoration:none; }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="Home.html" class="logo">Suka Beauty 💋</a>
+  <div class="nav-right">
+    <a href="Home.html">← Back to Shop</a>
+    <a href="cart.html">🛒 Cart</a>
+  </div>
+</nav>
+
+<div class="wrap">
+  <h1>My Wishlist</h1>
+  <div id="wishlistGrid" class="grid"><p>Loading...</p></div>
+</div>
+
+<script>
+  if (!requireLogin('wishlist.html')) { /* redirected */ }
+
+  async function loadWishlist() {
+    const grid = document.getElementById('wishlistGrid');
+    try {
+      const items = await WishlistAPI.list();
+      if (!items.length) {
+        grid.innerHTML = `<div class="empty" style="grid-column:1/-1;">Your wishlist is empty. <a href="Home.html">Browse products →</a></div>`;
+        return;
+      }
+      grid.innerHTML = items.map(item => {
+        const p = item.Product || {};
+        const img = (p.images && p.images[0]) || 'https://via.placeholder.com/220x220/fce8ec/e8748a?text=Suka+Beauty';
+        const price = p.discountPrice || p.price;
+        return `
+        <div class="card">
+          <button class="remove-btn" onclick="removeItem(${p.id})">✕</button>
+          <img src="${img}" onclick="window.location.href='product.html?slug=${p.slug}'"/>
+          <div class="name" onclick="window.location.href='product.html?slug=${p.slug}'">${p.name}</div>
+          <div class="price">₹${price}</div>
+          <button class="add-cart" onclick="moveToCart(${p.id})">Add to Cart</button>
+        </div>`;
+      }).join('');
+    } catch (err) {
+      grid.innerHTML = `<p>${err.message || 'Could not load wishlist'}</p>`;
+    }
+  }
+
+  async function removeItem(productId) {
+    try {
+      await WishlistAPI.remove(productId);
+      sbToast('Removed from wishlist');
+      await loadWishlist();
+    } catch (err) { sbToast(err.message || 'Could not remove item', true); }
+  }
+
+  async function moveToCart(productId) {
+    try {
+      await CartAPI.add(productId, 1);
+      sbToast('🛒 Added to cart!');
+    } catch (err) { sbToast(err.message || 'Could not add to cart', true); }
+  }
+
+  loadWishlist();
+</script>
+
+</body>
+</html>

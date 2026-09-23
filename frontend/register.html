@@ -1,0 +1,520 @@
+ty register · HTML
+Copy
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Suka Beauty – Register</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet"/>
+<script src="js/api.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+ 
+  :root {
+    --pink:  #e8748a;
+    --dark:  #2d1f24;
+    --muted: #9a7a82;
+    --light: #fff8f9;
+    --white: #ffffff;
+  }
+ 
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--light);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+ 
+  /* NAV */
+  nav {
+    background: var(--white);
+    padding: 16px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 2px solid #fce8ec;
+  }
+  .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--pink);
+    text-decoration: none;
+  }
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  nav a.home-link {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  nav a.home-link:hover { color: var(--pink); }
+  .btn-login-nav {
+    padding: 9px 20px;
+    background: none;
+    color: var(--pink);
+    border: 2px solid var(--pink);
+    border-radius: 25px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .btn-login-nav:hover { background: var(--pink); color: #fff; }
+ 
+  /* PAGE */
+  .page {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+  }
+ 
+  /* CARD */
+  .card {
+    background: var(--white);
+    border-radius: 20px;
+    padding: 44px 44px 36px;
+    width: 100%;
+    max-width: 460px;
+    box-shadow: 0 6px 28px rgba(232,116,138,0.13);
+    animation: fadeUp 0.35s ease;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+ 
+  .card-top {
+    text-align: center;
+    margin-bottom: 28px;
+  }
+  .card-top .icon { font-size: 2.8rem; margin-bottom: 10px; }
+  .card-top h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.75rem;
+    color: var(--dark);
+    margin-bottom: 6px;
+  }
+  .card-top p {
+    font-size: 0.83rem;
+    color: var(--muted);
+  }
+  .card-top p a {
+    color: var(--pink);
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .card-top p a:hover { text-decoration: underline; }
+ 
+  /* TWO COLUMN */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+ 
+  /* FIELDS */
+  .field { margin-bottom: 16px; }
+  .field label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 6px;
+  }
+  .field input, .field select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #fce8ec;
+    border-radius: 12px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.9rem;
+    color: var(--dark);
+    background: var(--light);
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+    appearance: none;
+  }
+  .field input:focus, .field select:focus {
+    border-color: var(--pink);
+    background: #fff;
+  }
+  .field input.error { border-color: #e05555; }
+  .err-msg {
+    font-size: 0.72rem;
+    color: #e05555;
+    margin-top: 4px;
+    display: none;
+  }
+  .err-msg.show { display: block; }
+ 
+  /* PASSWORD STRENGTH */
+  .strength-wrap { margin-top: 8px; }
+  .strength-bar {
+    display: flex;
+    gap: 4px;
+  }
+  .seg {
+    flex: 1;
+    height: 4px;
+    border-radius: 2px;
+    background: #fce8ec;
+    transition: background 0.3s;
+  }
+  .strength-text {
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+ 
+  /* TERMS */
+  .terms {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 6px;
+    font-size: 0.8rem;
+    color: var(--muted);
+    line-height: 1.5;
+    cursor: pointer;
+  }
+  .terms input[type="checkbox"] {
+    margin-top: 3px;
+    accent-color: var(--pink);
+    flex-shrink: 0;
+    width: 15px;
+    height: 15px;
+  }
+  .terms a { color: var(--pink); font-weight: 700; text-decoration: none; }
+  .terms a:hover { text-decoration: underline; }
+  .terms-err {
+    font-size: 0.72rem;
+    color: #e05555;
+    margin-bottom: 14px;
+    display: none;
+  }
+  .terms-err.show { display: block; }
+ 
+  /* SUBMIT BTN */
+  .btn-register {
+    width: 100%;
+    padding: 13px;
+    background: var(--pink);
+    color: #fff;
+    border: none;
+    border-radius: 25px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.92rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+    margin-top: 8px;
+    margin-bottom: 20px;
+  }
+  .btn-register:hover { background: #d45f75; }
+  .btn-register:active { transform: scale(0.98); }
+ 
+  .footer-txt {
+    text-align: center;
+    font-size: 0.82rem;
+    color: var(--muted);
+  }
+  .footer-txt a {
+    color: var(--pink);
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .footer-txt a:hover { text-decoration: underline; }
+ 
+  /* SUCCESS */
+  .success { display: none; text-align: center; }
+  .success.show { display: block; }
+  .success .s-icon { font-size: 3.5rem; margin-bottom: 14px; }
+  .success h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    color: var(--dark);
+    margin-bottom: 8px;
+  }
+  .success p {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-bottom: 22px;
+    line-height: 1.6;
+  }
+  .success-btns {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .success-btns a {
+    display: inline-block;
+    padding: 12px 26px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: 800;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+  }
+  .s-shop { background: var(--pink); color: #fff; }
+  .s-shop:hover { background: #d45f75; }
+  .s-login { border: 2px solid var(--dark); color: var(--dark); }
+  .s-login:hover { background: var(--dark); color: #fff; }
+</style>
+</head>
+<body>
+ 
+<!-- NAV -->
+<nav>
+  <a href="Home.html" class="logo">Suka Beauty 💋</a>
+  <div class="nav-right">
+    <a href="Home.html" class="home-link">← Home</a>
+    <a href="login.html" class="btn-login-nav">Login</a>
+  </div>
+</nav>
+ 
+<!-- PAGE -->
+<div class="page">
+  <div class="card">
+ 
+    <!-- FORM -->
+    <div id="formSection">
+      <div class="card-top">
+        <div class="icon">🌸</div>
+        <h1>Create Account</h1>
+        <p>Already have one? <a href="login.html">Login here</a></p>
+      </div>
+ 
+      <form id="registerForm" novalidate>
+ 
+        <!-- Name row -->
+        <div class="two-col">
+          <div class="field">
+            <label for="fname">First Name</label>
+            <input type="text" id="fname" placeholder="Aria"/>
+            <p class="err-msg" id="fnameErr">Required.</p>
+          </div>
+          <div class="field">
+            <label for="lname">Last Name</label>
+            <input type="text" id="lname" placeholder="Rose"/>
+            <p class="err-msg" id="lnameErr">Required.</p>
+          </div>
+        </div>
+ 
+        <!-- Email -->
+        <div class="field">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" placeholder="you@email.com" autocomplete="email"/>
+          <p class="err-msg" id="emailErr">Enter a valid email address.</p>
+        </div>
+ 
+        <!-- Phone -->
+        <div class="field">
+          <label for="phone">Phone Number</label>
+          <input type="tel" id="phone" placeholder="+1 234 567 8900"/>
+        </div>
+ 
+        <!-- Password -->
+        <div class="field">
+          <label for="password">Password</label>
+          <input type="password" id="password" placeholder="Min. 8 characters"
+                 autocomplete="new-password" oninput="checkStrength(this.value)"/>
+          <div class="strength-wrap">
+            <div class="strength-bar">
+              <div class="seg" id="s1"></div>
+              <div class="seg" id="s2"></div>
+              <div class="seg" id="s3"></div>
+              <div class="seg" id="s4"></div>
+            </div>
+            <p class="strength-text" id="strengthText">Enter a password</p>
+          </div>
+          <p class="err-msg" id="passErr">Password must be at least 8 characters.</p>
+        </div>
+ 
+        <!-- Confirm Password -->
+        <div class="field">
+          <label for="confirm">Confirm Password</label>
+          <input type="password" id="confirm" placeholder="Repeat your password" autocomplete="new-password"/>
+          <p class="err-msg" id="confirmErr">Passwords don't match.</p>
+        </div>
+ 
+        <!-- Terms -->
+        
+ 
+        <button type="button"
+        class="btn-register"
+        id="registerBtn"
+        onclick="doRegister()">
+        Create Account →
+        </button>
+      </form>
+ 
+      <p class="footer-txt">Already a member? <a href="login.html">Sign in →</a></p>
+    </div>
+ 
+    <!-- SUCCESS -->
+    <div class="success" id="successSection">
+      <div class="s-icon">🎀</div>
+      <h2>Welcome to Suka Beauty!</h2>
+      <p>Your account is all set. Enjoy 10% off your first order — check your email for the discount code!</p>
+      <div class="success-btns">
+        <a href="Home.html" class="s-shop">Shop Now →</a>
+        <a href="login.html" class="s-login">Login</a>
+      </div>
+    </div>
+ 
+  </div>
+</div>
+ 
+<script>
+  // ---- Real registration wired to backend API ----
+  async function doRegister() {
+    const fname = document.getElementById('fname').value.trim();
+    const lname = document.getElementById('lname').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const phone = document.getElementById('phone').value.trim();
+    const password = document.getElementById('password').value;
+    const confirm = document.getElementById('confirm').value;
+
+    // reset errors
+    const errIdMap = { fname: 'fnameErr', lname: 'lnameErr', email: 'emailErr', password: 'passErr', confirm: 'confirmErr' };
+    ['fname','lname','email','password','confirm'].forEach(id => {
+      document.getElementById(id).classList.remove('error');
+      const errEl = document.getElementById(errIdMap[id]);
+      if (errEl) errEl.classList.remove('show');
+    });
+
+    let valid = true;
+    if (!fname) { markError('fname'); valid = false; }
+    if (!lname) { markError('lname'); valid = false; }
+    if (!email || !email.includes('@')) { markError('email'); valid = false; }
+    if (!password || password.length < 8) { markError('password'); valid = false; }
+    if (password !== confirm) { markError('confirm'); valid = false; }
+    if (!valid) return;
+
+    const btn = document.getElementById('registerBtn');
+    const original = btn.textContent;
+    btn.textContent = 'Creating account...';
+    btn.disabled = true;
+
+    try {
+      const data = await AuthAPI.register({
+        name: `${fname} ${lname}`.trim(),
+        email,
+        phone,
+        password,
+      });
+      Auth.setToken(data.token);
+      Auth.setUser(data.user);
+      document.getElementById('formSection').style.display = 'none';
+      document.getElementById('successSection').classList.add('show');
+      setTimeout(() => {
+        window.location.href = 'Home.html';
+      }, 1500);
+    } catch (err) {
+      sbToast(err.message || 'Registration failed', true);
+      btn.textContent = original;
+      btn.disabled = false;
+    }
+  }
+
+  function markError(id) {
+    document.getElementById(id).classList.add('error');
+    const errMap = { password: 'passErr' };
+    const errId = errMap[id] || (id + 'Err');
+    const errEl = document.getElementById(errId);
+    if (errEl) errEl.classList.add('show');
+  }
+
+  // Password strength checker
+  function checkStrength(val) {
+    const segs = ['s1','s2','s3','s4'].map(id => document.getElementById(id));
+    const txt  = document.getElementById('strengthText');
+    let score  = 0;
+    if (val.length >= 8)            score++;
+    if (/[A-Z]/.test(val))          score++;
+    if (/[0-9]/.test(val))          score++;
+    if (/[^A-Za-z0-9]/.test(val))   score++;
+ 
+    const colors = ['#e05555', '#e0943a', '#c8a96e', '#5aaa72'];
+    const labels = ['Weak', 'Fair', 'Good', 'Strong'];
+ 
+    segs.forEach((s, i) => {
+      s.style.background = i < score ? colors[score - 1] : '#fce8ec';
+    });
+    txt.textContent = val.length === 0 ? 'Enter a password' : (labels[score - 1] || 'Too short');
+    txt.style.color  = val.length === 0 ? '#9a7a82' : (colors[score - 1] || '#e05555');
+  }
+ 
+  // Form submission & validation
+  document.getElementById('registerForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    let ok = true;
+ 
+    const checks = [
+      { id: 'fname',    errId: 'fnameErr',   test: v => v.trim().length > 0 },
+      { id: 'lname',    errId: 'lnameErr',   test: v => v.trim().length > 0 },
+      { id: 'email',    errId: 'emailErr',   test: v => /\S+@\S+\.\S+/.test(v) },
+      { id: 'password', errId: 'passErr',    test: v => v.length >= 8 },
+      { id: 'confirm',  errId: 'confirmErr', test: v => v === document.getElementById('password').value },
+    ];
+ 
+    checks.forEach(c => {
+      const el  = document.getElementById(c.id);
+      const err = document.getElementById(c.errId);
+      el.classList.remove('error');
+      err.classList.remove('show');
+      if (!c.test(el.value)) {
+        el.classList.add('error');
+        err.classList.add('show');
+        ok = false;
+      }
+    });
+ 
+    const termsErr = document.getElementById('termsErr');
+    termsErr.classList.remove('show');
+    if (!document.getElementById('terms').checked) {
+      termsErr.classList.add('show');
+      ok = false;
+    }
+ 
+    if (!ok) return;
+ 
+    // Save name to localStorage (consistent with login page)
+    const fullName = document.getElementById('fname').value.trim() + ' ' +
+                     document.getElementById('lname').value.trim();
+    localStorage.setItem('lms_name', fullName);
+ 
+    const btn = e.target.querySelector('.btn-register');
+    btn.textContent = 'Creating account...';
+    btn.disabled = true;
+ 
+    setTimeout(() => {
+    document.getElementById('formSection').style.display = 'none';
+    document.getElementById('successSection').classList.add('show');
+
+    setTimeout(() => {
+        window.location.href = "Home.html";
+    }, 2000);
+
+  }, 1800);
+
+});   // registerForm submit event close
+</script>
+ 
+</body>
+</html>

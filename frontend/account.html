@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>My Account – Suka Beauty</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet"/>
+<script src="js/api.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root { --pink:#e8748a; --dark:#1a1a1a; --muted:#777; --light:#fafafa; }
+  body { font-family:'Nunito',sans-serif; background:var(--light); color:var(--dark); }
+  nav { background:#fff; padding:14px 40px; display:flex; align-items:center; justify-content:space-between; border-bottom:2px solid #fce8ec; flex-wrap:wrap; gap:8px 16px; }
+  @media (max-width:480px) { nav { padding:12px 16px; } .nav-right a { margin-left:0; margin-right:14px; white-space:nowrap; } }
+  .logo { font-family:'Playfair Display',serif; font-size:1.4rem; font-weight:700; color:var(--pink); text-decoration:none; }
+  .nav-right a { font-size:0.82rem; color:var(--muted); text-decoration:none; margin-left:18px; font-weight:700; }
+  .wrap { max-width:800px; margin:0 auto; padding:32px 24px; }
+  h1 { font-family:'Playfair Display',serif; font-size:1.7rem; margin-bottom:20px; }
+  .card { background:#fff; border-radius:12px; padding:24px; margin-bottom:20px; box-shadow:0 2px 10px rgba(0,0,0,.04); }
+  .card h2 { font-size:1.05rem; margin-bottom:16px; }
+  .field { margin-bottom:14px; }
+  .field label { display:block; font-size:0.78rem; font-weight:700; margin-bottom:5px; }
+  .field input { width:100%; padding:10px 14px; border:2px solid #fce8ec; border-radius:8px; font-family:'Nunito',sans-serif; font-size:0.87rem; }
+  .btn { padding:10px 22px; background:var(--pink); color:#fff; border:none; border-radius:20px; font-weight:800; font-size:0.82rem; cursor:pointer; }
+  .btn-outline { background:#fff; border:2px solid #fce8ec; color:var(--dark); }
+  .two-col { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .addr-card { border:1.5px solid #f2f2f2; border-radius:8px; padding:14px; margin-bottom:10px; position:relative; }
+  .addr-card .tag { font-size:0.7rem; font-weight:800; color:var(--pink); text-transform:uppercase; }
+  .addr-card .txt { font-size:0.82rem; margin:6px 0; }
+  .addr-actions { display:flex; gap:10px; }
+  .addr-actions span { font-size:0.76rem; font-weight:700; color:var(--pink); cursor:pointer; }
+  .new-addr-form { display:none; margin-top:16px; }
+  .new-addr-form.open { display:block; }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="Home.html" class="logo">Suka Beauty 💋</a>
+  <div class="nav-right">
+    <a href="Home.html">← Back to Shop</a>
+    <a href="orders.html">My Orders</a>
+    <a href="#" onclick="Auth.logout();return false;">Logout</a>
+  </div>
+</nav>
+
+<div class="wrap">
+  <h1>My Account</h1>
+
+  <div class="card">
+    <h2>Profile</h2>
+    <div class="two-col">
+      <div class="field"><label>Name</label><input id="pName"/></div>
+      <div class="field"><label>Phone</label><input id="pPhone"/></div>
+    </div>
+    <div class="field"><label>Email (can't be changed)</label><input id="pEmail" disabled/></div>
+    <button class="btn" onclick="saveProfile()">Save Profile</button>
+  </div>
+
+  <div class="card">
+    <h2>Change Password</h2>
+    <div class="field"><label>Current Password</label><input type="password" id="curPwd"/></div>
+    <div class="field"><label>New Password</label><input type="password" id="newPwd"/></div>
+    <button class="btn" onclick="changePwd()">Update Password</button>
+  </div>
+
+  <div class="card">
+    <h2>Saved Addresses</h2>
+    <div id="addressList"></div>
+    <button class="btn-outline btn" onclick="toggleNewAddrForm()">+ Add New Address</button>
+
+    <div class="new-addr-form" id="newAddrForm">
+      <div class="two-col">
+        <div class="field"><label>Full Name</label><input id="aName"/></div>
+        <div class="field"><label>Phone</label><input id="aPhone"/></div>
+      </div>
+      <div class="field"><label>Label (Home/Work/Other)</label><input id="aLabel" value="Home"/></div>
+      <div class="field"><label>Address Line 1</label><input id="aLine1"/></div>
+      <div class="field"><label>Address Line 2</label><input id="aLine2"/></div>
+      <div class="two-col">
+        <div class="field"><label>City</label><input id="aCity"/></div>
+        <div class="field"><label>State</label><input id="aState"/></div>
+      </div>
+      <div class="field"><label>Pincode</label><input id="aPincode"/></div>
+      <button class="btn" onclick="addAddress()">Save Address</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  if (!requireLogin('account.html')) { /* redirected */ }
+
+  async function loadProfile() {
+    try {
+      const p = await UserAPI.getProfile();
+      document.getElementById('pName').value = p.name || '';
+      document.getElementById('pPhone').value = p.phone || '';
+      document.getElementById('pEmail').value = p.email || '';
+    } catch (err) { sbToast(err.message || 'Could not load profile', true); }
+  }
+
+  async function saveProfile() {
+    try {
+      const res = await UserAPI.updateProfile({
+        name: document.getElementById('pName').value.trim(),
+        phone: document.getElementById('pPhone').value.trim(),
+      });
+      Auth.setUser({ ...Auth.getUser(), ...res.user });
+      sbToast('Profile updated!');
+    } catch (err) { sbToast(err.message || 'Could not update profile', true); }
+  }
+
+  async function changePwd() {
+    const currentPassword = document.getElementById('curPwd').value;
+    const newPassword = document.getElementById('newPwd').value;
+    if (!currentPassword || newPassword.length < 8) { sbToast('Enter current password and a new one (min 8 chars)', true); return; }
+    try {
+      await UserAPI.changePassword({ currentPassword, newPassword });
+      sbToast('Password changed successfully');
+      document.getElementById('curPwd').value = '';
+      document.getElementById('newPwd').value = '';
+    } catch (err) { sbToast(err.message || 'Could not change password', true); }
+  }
+
+  async function loadAddresses() {
+    const container = document.getElementById('addressList');
+    try {
+      const addresses = await UserAPI.listAddresses();
+      if (!addresses.length) { container.innerHTML = '<p style="font-size:0.82rem;color:var(--muted);">No addresses saved yet.</p>'; return; }
+      container.innerHTML = addresses.map(a => `
+        <div class="addr-card">
+          <span class="tag">${a.label}${a.isDefault ? ' · Default' : ''}</span>
+          <div class="txt"><b>${a.fullName}</b> · ${a.phone}<br/>${a.line1}${a.line2 ? ', ' + a.line2 : ''}, ${a.city}, ${a.state} – ${a.pincode}</div>
+          <div class="addr-actions">
+            ${!a.isDefault ? `<span onclick="setDefault(${a.id})">Set as Default</span>` : ''}
+            <span onclick="deleteAddress(${a.id})">Delete</span>
+          </div>
+        </div>`).join('');
+    } catch (err) { container.innerHTML = `<p>${err.message}</p>`; }
+  }
+
+  function toggleNewAddrForm() {
+    document.getElementById('newAddrForm').classList.toggle('open');
+  }
+
+  async function addAddress() {
+    try {
+      await UserAPI.createAddress({
+        label: document.getElementById('aLabel').value.trim() || 'Home',
+        fullName: document.getElementById('aName').value.trim(),
+        phone: document.getElementById('aPhone').value.trim(),
+        line1: document.getElementById('aLine1').value.trim(),
+        line2: document.getElementById('aLine2').value.trim(),
+        city: document.getElementById('aCity').value.trim(),
+        state: document.getElementById('aState').value.trim(),
+        pincode: document.getElementById('aPincode').value.trim(),
+      });
+      sbToast('Address saved!');
+      document.getElementById('newAddrForm').classList.remove('open');
+      await loadAddresses();
+    } catch (err) { sbToast(err.message || 'Could not save address', true); }
+  }
+
+  async function setDefault(id) {
+    try { await UserAPI.updateAddress(id, { isDefault: true }); await loadAddresses(); }
+    catch (err) { sbToast(err.message || 'Could not update address', true); }
+  }
+
+  async function deleteAddress(id) {
+    try { await UserAPI.deleteAddress(id); sbToast('Address deleted'); await loadAddresses(); }
+    catch (err) { sbToast(err.message || 'Could not delete address', true); }
+  }
+
+  loadProfile();
+  loadAddresses();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Suka Beauty – Product</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet"/>
+<script src="js/api.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root { --pink:#e8748a; --dark:#1a1a1a; --muted:#777; --light:#fafafa; }
+  body { font-family:'Nunito',sans-serif; background:var(--light); color:var(--dark); }
+  nav { background:#fff; padding:14px 40px; display:flex; align-items:center; justify-content:space-between; border-bottom:2px solid #fce8ec; flex-wrap:wrap; gap:8px 16px; }
+  @media (max-width:480px) { nav { padding:12px 16px; } .nav-right a { margin-left:0; margin-right:14px; white-space:nowrap; } }
+  .logo { font-family:'Playfair Display',serif; font-size:1.4rem; font-weight:700; color:var(--pink); text-decoration:none; }
+  .nav-right a { font-size:0.82rem; color:var(--muted); text-decoration:none; margin-left:18px; font-weight:700; }
+  .wrap { max-width:1100px; margin:0 auto; padding:32px 24px; }
+  .breadcrumb { font-size:0.8rem; color:var(--muted); margin-bottom:20px; }
+  .breadcrumb a { color:var(--pink); text-decoration:none; }
+  .product-layout { display:grid; grid-template-columns:1fr 1fr; gap:40px; }
+  @media (max-width:800px) { .product-layout { grid-template-columns:1fr; } }
+  .gallery-main { width:100%; aspect-ratio:1; border-radius:16px; overflow:hidden; background:#fff; margin-bottom:12px; }
+  .gallery-main img { width:100%; height:100%; object-fit:cover; }
+  .gallery-thumbs { display:flex; gap:10px; }
+  .gallery-thumbs img { width:64px; height:64px; object-fit:cover; border-radius:8px; cursor:pointer; border:2px solid transparent; }
+  .gallery-thumbs img.active { border-color:var(--pink); }
+  .brand { font-size:0.78rem; color:var(--pink); font-weight:800; text-transform:uppercase; letter-spacing:.05em; }
+  h1 { font-family:'Playfair Display',serif; font-size:1.9rem; margin:6px 0 10px; }
+  .stars-row { display:flex; align-items:center; gap:8px; margin-bottom:14px; }
+  .stars { color:#f5a623; }
+  .price-row { display:flex; align-items:baseline; gap:12px; margin-bottom:16px; }
+  .price { font-size:1.7rem; font-weight:800; color:var(--dark); }
+  .price-old { font-size:1.1rem; color:#aaa; text-decoration:line-through; }
+  .discount-tag { background:#fce8ec; color:var(--pink); font-weight:800; font-size:0.78rem; padding:4px 10px; border-radius:6px; }
+  .desc { font-size:0.9rem; color:#444; line-height:1.7; margin-bottom:18px; }
+  .stock-note { font-size:0.82rem; font-weight:700; margin-bottom:18px; }
+  .stock-in { color:#2ecc71; } .stock-low { color:#e0943a; } .stock-out { color:#e05555; }
+  .action-row { display:flex; gap:12px; margin-bottom:24px; }
+  .btn-cart { flex:1; padding:14px; background:var(--pink); color:#fff; border:none; border-radius:8px; font-weight:800; font-size:0.9rem; cursor:pointer; text-transform:uppercase; letter-spacing:.04em; }
+  .btn-cart:hover { background:#d45f75; }
+  .btn-cart:disabled { opacity:.5; cursor:not-allowed; }
+  .btn-wish { width:52px; border:2px solid #fce8ec; border-radius:8px; background:#fff; font-size:1.3rem; cursor:pointer; }
+  .meta-row { font-size:0.82rem; color:var(--muted); display:flex; gap:18px; flex-wrap:wrap; }
+
+  .reviews-section { margin-top:50px; max-width:700px; }
+  .reviews-section h2 { font-family:'Playfair Display',serif; font-size:1.4rem; margin-bottom:16px; }
+  .review-form { background:#fff; border-radius:12px; padding:20px; margin-bottom:24px; border:1px solid #fce8ec; }
+  .star-picker { display:flex; gap:6px; font-size:1.6rem; margin-bottom:12px; cursor:pointer; }
+  .star-picker span { color:#ddd; }
+  .star-picker span.active { color:#f5a623; }
+  .review-form textarea { width:100%; padding:10px 14px; border:2px solid #fce8ec; border-radius:8px; font-family:'Nunito',sans-serif; font-size:0.85rem; resize:vertical; min-height:70px; margin-bottom:10px; }
+  .review-form button { padding:10px 22px; background:var(--pink); color:#fff; border:none; border-radius:20px; font-weight:800; font-size:0.82rem; cursor:pointer; }
+  .review-card { background:#fff; border-radius:10px; padding:16px; margin-bottom:12px; border:1px solid #f2f2f2; }
+  .review-card .rname { font-weight:800; font-size:0.85rem; }
+  .review-card .rstars { color:#f5a623; font-size:0.85rem; margin:4px 0; }
+  .review-card .rcomment { font-size:0.84rem; color:#444; }
+  .no-reviews { color:var(--muted); font-size:0.85rem; }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="Home.html" class="logo">Suka Beauty 💋</a>
+  <div class="nav-right">
+    <a href="Home.html">← Back to Shop</a>
+    <a href="cart.html">🛒 Cart</a>
+  </div>
+</nav>
+
+<div class="wrap">
+  <div class="breadcrumb"><a href="Home.html">Home</a> / <span id="crumbName">Product</span></div>
+
+  <div class="product-layout" id="productLayout">
+    <p>Loading product...</p>
+  </div>
+
+  <div class="reviews-section">
+    <h2>Customer Reviews</h2>
+    <div class="review-form">
+      <div class="star-picker" id="starPicker">
+        <span data-v="1">★</span><span data-v="2">★</span><span data-v="3">★</span><span data-v="4">★</span><span data-v="5">★</span>
+      </div>
+      <textarea id="reviewComment" placeholder="Share your experience with this product..."></textarea>
+      <button onclick="submitReview()">Submit Review</button>
+    </div>
+    <div id="reviewsList"></div>
+  </div>
+</div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const slug = params.get('slug');
+  let currentProduct = null;
+  let selectedRating = 0;
+  let inWishlist = false;
+
+  document.getElementById('starPicker').addEventListener('click', (e) => {
+    if (e.target.dataset.v) {
+      selectedRating = Number(e.target.dataset.v);
+      document.querySelectorAll('#starPicker span').forEach(s => {
+        s.classList.toggle('active', Number(s.dataset.v) <= selectedRating);
+      });
+    }
+  });
+
+  function starString(rating) {
+    const full = Math.round(rating || 0);
+    return '★'.repeat(full) + '☆'.repeat(5 - full);
+  }
+
+  async function loadProduct() {
+    if (!slug) { document.getElementById('productLayout').innerHTML = '<p>Product not found.</p>'; return; }
+    try {
+      currentProduct = await ProductAPI.getBySlug(slug);
+      document.getElementById('crumbName').textContent = currentProduct.name;
+      document.title = currentProduct.name + ' – Suka Beauty';
+      renderProduct(currentProduct);
+      await checkWishlist();
+      await loadReviews();
+    } catch (err) {
+      document.getElementById('productLayout').innerHTML = `<p>${err.message || 'Could not load product'}</p>`;
+    }
+  }
+
+  function renderProduct(p) {
+    const images = (p.images && p.images.length) ? p.images : ['https://via.placeholder.com/600x600/fce8ec/e8748a?text=Suka+Beauty'];
+    const price = p.discountPrice || p.price;
+    const hasDiscount = !!p.discountPrice;
+    const discountPct = hasDiscount ? Math.round((1 - p.discountPrice / p.price) * 100) : 0;
+
+    let stockHtml = '';
+    if (p.stock <= 0) stockHtml = '<span class="stock-out">Out of Stock</span>';
+    else if (p.stock <= 5) stockHtml = `<span class="stock-low">Only ${p.stock} left in stock — order soon</span>`;
+    else stockHtml = '<span class="stock-in">In Stock</span>';
+
+    document.getElementById('productLayout').innerHTML = `
+      <div>
+        <div class="gallery-main"><img id="mainImg" src="${images[0]}" alt="${p.name}"/></div>
+        <div class="gallery-thumbs">
+          ${images.map((img, i) => `<img src="${img}" class="${i === 0 ? 'active' : ''}" onclick="switchImg(this,'${img}')"/>`).join('')}
+        </div>
+      </div>
+      <div>
+        <div class="brand">${p.brand || 'Suka Beauty'}</div>
+        <h1>${p.name}</h1>
+        <div class="stars-row">
+          <span class="stars">${starString(p.ratingAvg)}</span>
+          <span style="font-size:0.82rem;color:var(--muted);">(${p.numReviews || 0} reviews)</span>
+        </div>
+        <div class="price-row">
+          <span class="price">₹${price}</span>
+          ${hasDiscount ? `<span class="price-old">₹${p.price}</span><span class="discount-tag">${discountPct}% Off</span>` : ''}
+        </div>
+        <p class="desc">${p.description || ''}</p>
+        <p class="stock-note">${stockHtml}</p>
+        <div class="action-row">
+          <button class="btn-cart" id="addCartBtn" onclick="addToCart()" ${p.stock <= 0 ? 'disabled' : ''}>${p.stock <= 0 ? 'Out of Stock' : 'Add to Cart'}</button>
+          <button class="btn-wish" id="wishBtn" onclick="toggleWish()">🤍</button>
+        </div>
+        <div class="meta-row">
+          <span>✓ 100% Authentic</span>
+          <span>✓ Easy 7-day Returns</span>
+          <span>✓ Free Delivery over ₹999</span>
+          ${p.skinType ? `<span>Skin Type: ${p.skinType}</span>` : ''}
+        </div>
+      </div>`;
+  }
+
+  function switchImg(el, src) {
+    document.getElementById('mainImg').src = src;
+    document.querySelectorAll('.gallery-thumbs img').forEach(i => i.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  async function addToCart() {
+    if (!Auth.isLoggedIn()) {
+      sbToast('Please login to add items to your cart', true);
+      setTimeout(() => window.location.href = `login.html?next=product.html?slug=${slug}`, 900);
+      return;
+    }
+    try {
+      await CartAPI.add(currentProduct.id, 1);
+      sbToast('🛒 Added to cart!');
+    } catch (err) { sbToast(err.message || 'Could not add to cart', true); }
+  }
+
+  async function checkWishlist() {
+    if (!Auth.isLoggedIn()) return;
+    try {
+      const items = await WishlistAPI.list();
+      inWishlist = items.some(i => i.productId === currentProduct.id);
+      document.getElementById('wishBtn').textContent = inWishlist ? '❤️' : '🤍';
+    } catch (e) {}
+  }
+
+  async function toggleWish() {
+    if (!Auth.isLoggedIn()) {
+      sbToast('Please login to save favorites', true);
+      setTimeout(() => window.location.href = 'login.html', 900);
+      return;
+    }
+    try {
+      if (inWishlist) { await WishlistAPI.remove(currentProduct.id); inWishlist = false; sbToast('Removed from wishlist'); }
+      else { await WishlistAPI.add(currentProduct.id); inWishlist = true; sbToast('❤️ Added to wishlist!'); }
+      document.getElementById('wishBtn').textContent = inWishlist ? '❤️' : '🤍';
+    } catch (err) { sbToast(err.message || 'Wishlist update failed', true); }
+  }
+
+  async function loadReviews() {
+    try {
+      const reviews = await ProductAPI.reviews(currentProduct.id);
+      const list = document.getElementById('reviewsList');
+      if (!reviews.length) { list.innerHTML = '<p class="no-reviews">No reviews yet. Be the first to share your experience!</p>'; return; }
+      list.innerHTML = reviews.map(r => `
+        <div class="review-card">
+          <div class="rname">${r.User ? r.User.name : 'Anonymous'}</div>
+          <div class="rstars">${starString(r.rating)}</div>
+          <div class="rcomment">${r.comment || ''}</div>
+        </div>`).join('');
+    } catch (e) {}
+  }
+
+  async function submitReview() {
+    if (!Auth.isLoggedIn()) {
+      sbToast('Please login to leave a review', true);
+      setTimeout(() => window.location.href = 'login.html', 900);
+      return;
+    }
+    if (!selectedRating) { sbToast('Please select a star rating', true); return; }
+    const comment = document.getElementById('reviewComment').value.trim();
+    try {
+      await ProductAPI.addReview(currentProduct.id, { rating: selectedRating, comment });
+      sbToast('Thanks for your review!');
+      document.getElementById('reviewComment').value = '';
+      selectedRating = 0;
+      document.querySelectorAll('#starPicker span').forEach(s => s.classList.remove('active'));
+      await loadReviews();
+      await loadProduct(); // refresh aggregate rating
+    } catch (err) { sbToast(err.message || 'Could not submit review', true); }
+  }
+
+  loadProduct();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Checkout – Suka Beauty</title>
+  <script src="js/api.js"></script>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet"/>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --pink:   #e8748a;
+      --dark:   #1a1a1a;
+      --muted:  #777;
+      --light:  #fafafa;
+      --white:  #fff;
+      --border: #e8e8e8;
+      --green:  #2ecc71;
+    }
+    body { font-family: 'Nunito', sans-serif; background: var(--light); color: var(--dark); }
+
+    /* NAV */
+    .topbar { background: var(--dark); color: #fff; text-align: center; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; padding: 8px 20px; }
+    .topbar span { color: var(--pink); }
+    nav { background: var(--white); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 200; }
+    .nav-inner { max-width: 1300px; margin: 0 auto; padding: 0 40px; display: flex; align-items: center; justify-content: space-between; height: 64px; gap: 20px; }
+    .logo { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 700; color: var(--dark); text-decoration: none; }
+    .logo span { color: var(--pink); }
+    .nav-right { display: flex; align-items: center; gap: 10px; }
+    .nav-btn { padding: 8px 16px; border-radius: 25px; font-family: 'Nunito', sans-serif; font-size: 0.78rem; font-weight: 700; cursor: pointer; text-decoration: none; transition: all .2s; border: 2px solid var(--pink); }
+    .nav-btn-outline { background: none; color: var(--pink); }
+    .nav-btn-outline:hover { background: var(--pink); color: #fff; }
+    .nav-btn-fill { background: var(--pink); color: #fff; }
+    .nav-btn-fill:hover { background: #d45f75; }
+    .cart-nav-icon { position: relative; cursor: pointer; background: none; border: none; padding: 6px; }
+    .cart-nav-icon svg { width: 22px; height: 22px; color: var(--pink); }
+    .cart-badge { position: absolute; top: 0; right: 0; background: var(--pink); color: #fff; font-size: 0.6rem; font-weight: 800; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
+    /* STEPS BAR */
+    .steps-bar { background: var(--white); border-bottom: 1px solid var(--border); padding: 14px 0; }
+    .steps-inner { max-width: 680px; margin: 0 auto; display: flex; align-items: center; justify-content: center; }
+    .step { display: flex; flex-direction: column; align-items: center; gap: 5px; flex: 1; position: relative; cursor: pointer; }
+    .step:not(:last-child)::after { content: ''; position: absolute; top: 14px; left: calc(50% + 18px); right: calc(-50% + 18px); height: 2px; background: var(--border); z-index: 0; }
+    .step.done:not(:last-child)::after { background: var(--pink); }
+    .step-circle { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--border); background: var(--white); display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 800; color: var(--muted); position: relative; z-index: 1; transition: all .3s; }
+    .step.active .step-circle { border-color: var(--pink); background: var(--pink); color: #fff; }
+    .step.done .step-circle { border-color: var(--pink); background: var(--pink); color: #fff; }
+    .step-label { font-size: 0.68rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    .step.active .step-label, .step.done .step-label { color: var(--pink); }
+
+    /* BREADCRUMB */
+    .breadcrumb { max-width: 1100px; margin: 16px auto 0; padding: 0 40px; display: flex; align-items: center; gap: 8px; font-size: 0.78rem; font-weight: 600; color: var(--muted); }
+    .breadcrumb a { color: var(--pink); text-decoration: none; display: flex; align-items: center; gap: 4px; }
+
+    /* LAYOUT */
+    .checkout-page { max-width: 1100px; margin: 0 auto; padding: 24px 40px 60px; display: grid; grid-template-columns: 1fr 340px; gap: 24px; align-items: start; }
+
+    /* LEFT PANE */
+    .checkout-left { min-width: 0; }
+
+    /* STEP PANELS */
+    .step-panel { display: none; }
+    .step-panel.active { display: block; }
+
+    .panel-heading { font-family: 'Playfair Display', serif; font-size: 1.2rem; font-weight: 700; color: var(--dark); margin-bottom: 18px; }
+
+    /* ─── CART STEP ─── */
+    .cart-items { display: flex; flex-direction: column; }
+    .cart-item { background: var(--white); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 14px; overflow: hidden; transition: box-shadow .2s; }
+    .cart-item:hover { box-shadow: 0 4px 16px rgba(0,0,0,.07); }
+    .cart-item-body { display: flex; align-items: flex-start; gap: 16px; padding: 18px 20px 14px; }
+    .item-img { width: 90px; height: 90px; border-radius: 8px; object-fit: cover; flex-shrink: 0; border: 1px solid var(--border); }
+    .item-details { flex: 1; }
+    .item-name { font-size: 0.88rem; font-weight: 700; color: var(--dark); margin-bottom: 6px; line-height: 1.35; }
+    .item-price-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .item-price { font-size: 1rem; font-weight: 800; color: var(--dark); }
+    .item-price-old { font-size: 0.8rem; color: var(--muted); text-decoration: line-through; }
+    .item-discount { font-size: 0.75rem; font-weight: 700; color: var(--green); }
+    .item-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+    .item-tag { font-size: 0.68rem; font-weight: 700; padding: 3px 9px; border-radius: 25px; border: 1px solid var(--border); color: var(--muted); }
+    .item-qty-row { display: flex; align-items: center; gap: 10px; }
+    .qty-label { font-size: 0.75rem; font-weight: 700; color: var(--muted); }
+    .qty-ctrl { display: flex; align-items: center; border: 1.5px solid var(--border); border-radius: 6px; overflow: hidden; }
+    .qty-btn { width: 28px; height: 28px; background: var(--light); border: none; font-size: 1rem; font-weight: 800; color: var(--dark); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .15s; }
+    .qty-btn:hover { background: #fce8ec; color: var(--pink); }
+    .qty-num { width: 34px; text-align: center; font-size: 0.88rem; font-weight: 800; border: none; outline: none; font-family: 'Nunito', sans-serif; background: var(--white); }
+    .cart-item-footer { display: flex; align-items: center; justify-content: space-between; padding: 10px 20px; border-top: 1px solid var(--border); background: #fafafa; flex-wrap: wrap; gap: 8px; }
+    .seller-info { font-size: 0.72rem; color: var(--muted); font-weight: 600; }
+    .seller-info span { color: var(--dark); font-weight: 700; }
+    .item-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .delivery-badge { font-size: 0.7rem; font-weight: 700; color: var(--green); }
+    .action-btn { background: none; border: none; font-family: 'Nunito', sans-serif; font-size: 0.72rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 5px 10px; border-radius: 4px; transition: all .15s; letter-spacing: 0.04em; text-transform: uppercase; }
+    .action-remove { color: #e05555; border: 1.5px solid #e05555; }
+    .action-remove:hover { background: #e05555; color: #fff; }
+
+    /* EMPTY CART */
+    .empty-cart { text-align: center; padding: 60px 20px; background: var(--white); border-radius: 10px; border: 1px solid var(--border); }
+    .empty-cart .e-icon { font-size: 4rem; margin-bottom: 14px; }
+    .empty-cart h3 { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--dark); margin-bottom: 8px; }
+    .empty-cart p { font-size: 0.85rem; color: var(--muted); margin-bottom: 22px; }
+    .empty-cart a { display: inline-block; padding: 12px 28px; background: var(--pink); color: #fff; border-radius: 4px; text-decoration: none; font-weight: 800; font-size: 0.82rem; text-transform: uppercase; letter-spacing: .06em; transition: background .2s; }
+    .empty-cart a:hover { background: #d45f75; }
+
+    /* SUGGESTED */
+    .suggest-section { margin-top: 24px; }
+    .suggest-section h3 { font-family: 'Playfair Display', serif; font-size: 1rem; color: var(--dark); margin-bottom: 14px; }
+    .suggest-row { display: flex; gap: 12px; overflow-x: auto; scrollbar-width: none; padding-bottom: 4px; }
+    .suggest-row::-webkit-scrollbar { display: none; }
+    .suggest-card { background: var(--white); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; min-width: 130px; cursor: pointer; transition: transform .2s, box-shadow .2s; flex-shrink: 0; }
+    .suggest-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,.09); }
+    .suggest-card img { width: 100%; height: 110px; object-fit: cover; display: block; }
+    .suggest-card-body { padding: 8px 10px; }
+    .suggest-card-name { font-size: 0.68rem; font-weight: 700; color: var(--dark); margin-bottom: 4px; line-height: 1.3; text-transform: uppercase; }
+    .suggest-card-price { font-size: 0.78rem; font-weight: 800; color: var(--pink); margin-bottom: 6px; }
+    .suggest-add-btn { width: 100%; padding: 6px; background: var(--dark); color: #fff; border: none; border-radius: 3px; font-family: 'Nunito', sans-serif; font-size: 0.65rem; font-weight: 800; cursor: pointer; text-transform: uppercase; transition: background .2s; }
+    .suggest-add-btn:hover { background: var(--pink); }
+
+    /* ─── ADDRESS STEP ─── */
+    .address-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px; }
+    .address-grid.full { grid-template-columns: 1fr; }
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-group label { font-size: 0.75rem; font-weight: 800; color: var(--dark); text-transform: uppercase; letter-spacing: .04em; }
+    .form-group input, .form-group select, .form-group textarea {
+      padding: 10px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.85rem;
+      color: var(--dark);
+      outline: none;
+      transition: border-color .2s;
+      background: #fff;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--pink); }
+    .form-group textarea { resize: vertical; min-height: 80px; }
+    .form-error { font-size: 0.7rem; color: #e05555; font-weight: 700; display: none; }
+    .form-group.error input, .form-group.error select { border-color: #e05555; }
+    .form-group.error .form-error { display: block; }
+
+    .address-type-row { display: flex; gap: 12px; margin-bottom: 18px; }
+    .addr-type-btn { flex: 1; padding: 10px; border: 2px solid var(--border); border-radius: 8px; background: #fff; font-family: 'Nunito', sans-serif; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: all .2s; }
+    .addr-type-btn:hover { border-color: var(--pink); }
+    .addr-type-btn.selected { border-color: var(--pink); background: #fff5f7; color: var(--pink); }
+
+    .saved-addresses { margin-bottom: 20px; }
+    .saved-addr-head { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; color: var(--dark); margin-bottom: 12px; }
+    .saved-addr-card { border: 1.5px solid var(--border); border-radius: 8px; padding: 14px; margin-bottom: 10px; cursor: pointer; transition: all .2s; position: relative; }
+    .saved-addr-card:hover { border-color: var(--pink); }
+    .saved-addr-card.selected { border-color: var(--pink); background: #fff5f7; }
+    .saved-addr-card input[type="radio"] { position: absolute; top: 14px; right: 14px; accent-color: var(--pink); width: 16px; height: 16px; }
+    .saved-addr-name { font-size: 0.85rem; font-weight: 800; color: var(--dark); margin-bottom: 4px; }
+    .saved-addr-text { font-size: 0.78rem; color: var(--muted); line-height: 1.5; }
+    .saved-addr-tag { display: inline-block; font-size: 0.63rem; font-weight: 800; background: #edfaf2; color: #1a7a44; border-radius: 4px; padding: 2px 8px; margin-top: 6px; }
+    .add-new-btn { width: 100%; padding: 11px; border: 2px dashed var(--border); border-radius: 8px; background: none; font-family: 'Nunito', sans-serif; font-size: 0.82rem; font-weight: 700; color: var(--pink); cursor: pointer; transition: all .2s; margin-bottom: 18px; }
+    .add-new-btn:hover { border-color: var(--pink); background: #fff5f7; }
+    .new-addr-form { display: none; background: #fafafa; border-radius: 10px; padding: 18px; border: 1px solid var(--border); margin-bottom: 18px; }
+    .new-addr-form.open { display: block; }
+
+    /* ─── PAYMENT STEP ─── */
+    .payment-methods { display: flex; flex-direction: column; gap: 10px; margin-bottom: 22px; }
+    .pay-option { border: 1.5px solid var(--border); border-radius: 10px; overflow: hidden; transition: border-color .2s; cursor: pointer; }
+    .pay-option:hover { border-color: var(--pink); }
+    .pay-option.selected { border-color: var(--pink); }
+    .pay-header { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: #fff; }
+    .pay-header input[type="radio"] { accent-color: var(--pink); width: 16px; height: 16px; }
+    .pay-icon { font-size: 1.4rem; }
+    .pay-label { font-size: 0.88rem; font-weight: 800; color: var(--dark); }
+    .pay-sub { font-size: 0.72rem; color: var(--muted); }
+    .pay-body { padding: 0 16px; max-height: 0; overflow: hidden; transition: max-height .3s, padding .3s; }
+    .pay-option.selected .pay-body { max-height: 300px; padding: 0 16px 16px; }
+    .card-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+    .card-field-full { grid-column: 1/-1; }
+    .card-input { padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'Nunito', sans-serif; font-size: 0.85rem; outline: none; width: 100%; }
+    .card-input:focus { border-color: var(--pink); }
+    .upi-row { display: flex; gap: 10px; margin-top: 12px; }
+    .upi-input { flex: 1; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'Nunito', sans-serif; font-size: 0.85rem; outline: none; }
+    .upi-input:focus { border-color: var(--pink); }
+    .upi-verify-btn { padding: 10px 16px; background: var(--pink); color: #fff; border: none; border-radius: 8px; font-family: 'Nunito', sans-serif; font-size: 0.8rem; font-weight: 800; cursor: pointer; }
+    .netbank-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-top: 12px; }
+    .bank-btn { padding: 10px 6px; border: 1.5px solid var(--border); border-radius: 8px; background: #fff; text-align: center; cursor: pointer; font-size: 0.72rem; font-weight: 700; color: var(--dark); transition: all .2s; }
+    .bank-btn:hover { border-color: var(--pink); color: var(--pink); }
+    .bank-btn.sel { border-color: var(--pink); background: #fff5f7; color: var(--pink); }
+    .cod-note { font-size: 0.82rem; color: var(--muted); margin-top: 12px; line-height: 1.5; }
+    .wallet-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-top: 12px; }
+    .wallet-btn { padding: 10px 6px; border: 1.5px solid var(--border); border-radius: 8px; background: #fff; text-align: center; cursor: pointer; font-size: 0.72rem; font-weight: 700; color: var(--dark); transition: all .2s; }
+    .wallet-btn:hover { border-color: var(--pink); color: var(--pink); }
+
+    /* ─── SUMMARY STEP ─── */
+    .order-success { text-align: center; padding: 40px 20px; background: var(--white); border-radius: 14px; border: 1px solid var(--border); }
+    .success-icon { font-size: 4rem; margin-bottom: 16px; animation: pop .4s ease; }
+    @keyframes pop { from { transform: scale(0); } to { transform: scale(1); } }
+    .order-success h2 { font-family: 'Playfair Display', serif; font-size: 1.8rem; color: var(--dark); margin-bottom: 8px; }
+    .order-success p { font-size: 0.88rem; color: var(--muted); margin-bottom: 6px; }
+    .order-id { font-size: 0.88rem; font-weight: 800; color: var(--pink); margin-bottom: 24px; }
+    .order-detail-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+    .order-detail-row:last-child { border-bottom: none; }
+    .order-detail-row .lbl { color: var(--muted); font-weight: 600; }
+    .order-detail-row .val { font-weight: 800; color: var(--dark); }
+    .track-btn { display: inline-block; margin-top: 20px; padding: 12px 32px; background: var(--pink); color: #fff; border-radius: 6px; text-decoration: none; font-weight: 800; font-size: 0.85rem; text-transform: uppercase; letter-spacing: .06em; transition: background .2s; cursor: pointer; border: none; font-family: 'Nunito', sans-serif; }
+    .track-btn:hover { background: #d45f75; }
+    .continue-shop { display: inline-block; margin-top: 12px; padding: 10px 28px; border: 2px solid var(--dark); color: var(--dark); border-radius: 6px; text-decoration: none; font-weight: 800; font-size: 0.82rem; text-transform: uppercase; letter-spacing: .06em; transition: all .2s; cursor: pointer; background: none; font-family: 'Nunito', sans-serif; }
+    .continue-shop:hover { background: var(--dark); color: #fff; }
+
+    /* ─── RIGHT: PRICE CARD ─── */
+    .cart-right {}
+    .price-card { background: var(--white); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; position: sticky; top: 80px; }
+    .price-card-head { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .price-card-head h3 { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 700; }
+    .price-card-head span { font-size: 0.78rem; color: var(--muted); font-weight: 600; }
+    .price-rows { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 12px; }
+    .price-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; }
+    .price-row .label { color: var(--muted); font-weight: 600; }
+    .price-row .val { font-weight: 700; color: var(--dark); }
+    .price-row .val.discount { color: var(--green); }
+    .price-row .val.free { color: var(--green); font-weight: 800; }
+    .price-total-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+    .price-total-row .label { font-size: 0.92rem; font-weight: 800; }
+    .price-total-row .val { font-size: 1.1rem; font-weight: 800; }
+    .savings-banner { margin: 14px 20px; background: #edfaf2; border: 1.5px solid #a8e6c4; border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; gap: 8px; font-size: 0.78rem; font-weight: 700; color: #1a7a44; }
+
+    /* COUPON */
+    .coupon-section { padding: 14px 20px; border-bottom: 1px solid var(--border); }
+    .coupon-label { font-size: 0.75rem; font-weight: 800; color: var(--dark); margin-bottom: 8px; text-transform: uppercase; letter-spacing: .06em; }
+    .coupon-row { display: flex; }
+    .coupon-row input { flex: 1; padding: 10px 14px; border: 1.5px solid var(--border); border-right: none; border-radius: 6px 0 0 6px; font-family: 'Nunito', sans-serif; font-size: 0.82rem; outline: none; text-transform: uppercase; }
+    .coupon-row input:focus { border-color: var(--pink); }
+    .coupon-row button { padding: 10px 16px; background: var(--pink); color: #fff; border: 1.5px solid var(--pink); border-radius: 0 6px 6px 0; font-family: 'Nunito', sans-serif; font-size: 0.78rem; font-weight: 800; cursor: pointer; }
+    .coupon-applied { font-size: 0.72rem; color: var(--green); font-weight: 700; margin-top: 6px; display: none; }
+    .coupon-applied.show { display: block; }
+
+    /* CHECKOUT BTN */
+    .checkout-section { padding: 18px 20px; }
+    .note-text { font-size: 0.72rem; color: var(--muted); text-align: center; margin-bottom: 12px; line-height: 1.5; }
+    .continue-btn { width: 100%; padding: 14px; background: var(--pink); color: #fff; border: none; border-radius: 6px; font-family: 'Nunito', sans-serif; font-size: 0.92rem; font-weight: 800; cursor: pointer; letter-spacing: .06em; text-transform: uppercase; transition: background .2s, transform .15s; margin-bottom: 12px; }
+    .continue-btn:hover { background: #d45f75; }
+    .continue-btn:active { transform: scale(.98); }
+    .continue-btn:disabled { background: #ccc; cursor: not-allowed; }
+    .back-btn { width: 100%; padding: 11px; background: none; border: 2px solid var(--border); border-radius: 6px; font-family: 'Nunito', sans-serif; font-size: 0.82rem; font-weight: 800; cursor: pointer; color: var(--muted); transition: all .2s; }
+    .back-btn:hover { border-color: var(--dark); color: var(--dark); }
+
+    /* SAFETY */
+    .safety-banner { margin: 0 20px 18px; background: linear-gradient(135deg,#fff5f7,#fce8ec); border: 1px solid #f5c6ce; border-radius: 8px; padding: 14px; display: flex; align-items: center; gap: 12px; }
+    .safety-banner .s-icon { font-size: 2rem; flex-shrink: 0; }
+    .safety-banner h4 { font-size: 0.78rem; font-weight: 800; color: var(--pink); margin-bottom: 3px; }
+    .safety-banner p { font-size: 0.7rem; color: var(--muted); line-height: 1.4; }
+
+    /* ORDER SUMMARY IN SIDEBAR */
+    .order-summary-items { padding: 12px 20px; border-bottom: 1px solid var(--border); max-height: 300px; overflow-y: auto; }
+    .osi { display: flex; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+    .osi:last-child { border-bottom: none; }
+    .osi img { width: 48px; height: 48px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); flex-shrink: 0; }
+    .osi-info { flex: 1; }
+    .osi-name { font-size: 0.72rem; font-weight: 700; color: var(--dark); line-height: 1.3; }
+    .osi-qty { font-size: 0.68rem; color: var(--muted); }
+    .osi-price { font-size: 0.82rem; font-weight: 800; color: var(--dark); white-space: nowrap; }
+
+    /* ADDRESS SUMMARY CARD */
+    .addr-summary { background: #f5f5f5; border-radius: 8px; padding: 14px; margin-bottom: 20px; border-left: 4px solid var(--pink); }
+    .addr-summary h4 { font-size: 0.78rem; font-weight: 800; color: var(--dark); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .04em; }
+    .addr-summary p { font-size: 0.8rem; color: var(--muted); line-height: 1.6; }
+    .addr-summary .edit-link { font-size: 0.72rem; font-weight: 800; color: var(--pink); cursor: pointer; text-decoration: underline; margin-top: 6px; display: inline-block; }
+
+    /* TOAST */
+    .toast { position: fixed; bottom: 24px; right: 24px; background: var(--dark); color: #fff; padding: 12px 20px; border-radius: 6px; font-size: 0.82rem; font-weight: 700; opacity: 0; transform: translateY(12px); transition: all .3s; pointer-events: none; z-index: 999; border-left: 4px solid var(--pink); }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    footer { background: #111; color: #888; text-align: center; padding: 20px; font-size: 0.78rem; margin-top: 40px; }
+    footer span { color: var(--pink); }
+
+    /* SHADE */
+    .item-shade-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .shade-label { font-size: 0.72rem; font-weight: 700; color: var(--muted); }
+    .shade-dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; transition: transform .15s; }
+    .shade-dot.selected { border-color: var(--dark); transform: scale(1.15); }
+
+    /* ===================== RESPONSIVE ===================== */
+    @media (max-width: 900px) {
+      .checkout-page { grid-template-columns: 1fr; padding: 16px; }
+      .address-grid, .card-fields { grid-template-columns: 1fr; }
+      .nav-inner { padding: 0 16px; }
+      .nav-right { gap: 6px; }
+      .nav-right .nav-btn { padding: 7px 12px; font-size: 0.72rem; }
+      .steps-inner { padding: 0 16px; max-width: 100%; }
+    }
+    @media (max-width: 480px) {
+      .nav-inner { flex-wrap: wrap; height: auto; padding: 10px 14px; gap: 8px 6px; justify-content: space-between; }
+      .logo { font-size: 1.15rem; }
+      .nav-right { flex-wrap: wrap; justify-content: flex-end; }
+      .netbank-grid, .wallet-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">🎁 FREE SHIPPING on orders above ₹499 &nbsp;|&nbsp; <span>USE CODE: SUKA15</span> for 15% off</div>
+
+<nav>
+  <div class="nav-inner">
+    <a href="Home.html" class="logo">Suka<span>Beauty</span></a>
+    <div class="nav-right">
+      <span id="authArea"><a href="login.html" class="nav-btn nav-btn-outline">Login</a>
+      <a href="register.html" class="nav-btn nav-btn-fill">Register</a></span>
+      <button class="cart-nav-icon" onclick="goStep(0)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        <span class="cart-badge" id="cartBadge">0</span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- STEPS BAR -->
+<div class="steps-bar">
+  <div class="steps-inner">
+    <div class="step active" id="step-0" onclick="goStep(0)">
+      <div class="step-circle">1</div>
+      <div class="step-label">Cart</div>
+    </div>
+    <div class="step" id="step-1" onclick="goStep(1)">
+      <div class="step-circle">2</div>
+      <div class="step-label">Address</div>
+    </div>
+    <div class="step" id="step-2" onclick="goStep(2)">
+      <div class="step-circle">3</div>
+      <div class="step-label">Payment</div>
+    </div>
+    <div class="step" id="step-3">
+      <div class="step-circle">4</div>
+      <div class="step-label">Summary</div>
+    </div>
+  </div>
+</div>
+
+<!-- BREADCRUMB -->
+<div class="breadcrumb">
+  <a href="Home.html">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m15 18-6-6 6-6"/></svg>
+    Continue Shopping
+  </a>
+  <span style="color:var(--border)">|</span>
+  <span id="breadLabel">My Cart</span>
+</div>
+
+<!-- MAIN -->
+<div class="checkout-page">
+  <div class="checkout-left">
+
+    <!-- ══ STEP 1: CART ══ -->
+    <div class="step-panel active" id="panel-0">
+      <h2 class="panel-heading">Product Details</h2>
+      <div class="cart-items" id="cartItems">
+        <!-- Rendered by JS -->
+      </div>
+      <div class="empty-cart" id="emptyCart" style="display:none">
+        <div class="e-icon">🛒</div>
+        <h3>Your cart is empty</h3>
+        <p>Looks like you haven't added anything yet!</p>
+        <a href="Home.html">Shop Now →</a>
+      </div>
+      <div class="suggest-section" id="suggestSection">
+        <h3>You May Also Like</h3>
+        <div class="suggest-row">
+          <div class="suggest-card">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTFUfvu0QzUH7HbE1cCHfbvBNTQ8Qb9Oswr6w&s" alt=""/>
+            <div class="suggest-card-body">
+              <div class="suggest-card-name">Glide Peptide Serum Lipstick</div>
+              <div class="suggest-card-price">₹499</div>
+              <button class="suggest-add-btn" onclick="addFromSuggested('Glide Peptide Serum Lipstick',499,499,'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTFUfvu0QzUH7HbE1cCHfbvBNTQ8Qb9Oswr6w&s')">+ Add</button>
+            </div>
+          </div>
+          <div class="suggest-card">
+            <img src="https://m.media-amazon.com/images/I/51EYBH58guL._AC_UF1000,1000_QL80_.jpg" alt=""/>
+            <div class="suggest-card-body">
+              <div class="suggest-card-name">Matte Attack Transferproof</div>
+              <div class="suggest-card-price">₹749</div>
+              <button class="suggest-add-btn" onclick="addFromSuggested('Matte Attack Transferproof Lipstick',749,860,'https://m.media-amazon.com/images/I/51EYBH58guL._AC_UF1000,1000_QL80_.jpg')">+ Add</button>
+            </div>
+          </div>
+          <div class="suggest-card">
+            <img src="https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=300&q=80" alt=""/>
+            <div class="suggest-card-body">
+              <div class="suggest-card-name">Kojic Acid Sunscreen</div>
+              <div class="suggest-card-price">₹399</div>
+              <button class="suggest-add-btn" onclick="addFromSuggested('Tan Ban Kojic Acid Sunscreen',399,399,'https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=300&q=80')">+ Add</button>
+            </div>
+          </div>
+          <div class="suggest-card">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT6ExnYNM5YelVXCkaW71dvtej9qDbohCiM5Q&s" alt=""/>
+            <div class="suggest-card-body">
+              <div class="suggest-card-name">Kohl Intense Kajal</div>
+              <div class="suggest-card-price">₹399</div>
+              <button class="suggest-add-btn" onclick="addFromSuggested('Intense Eye Kajal',399,399,'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT6ExnYNM5YelVXCkaW71dvtej9qDbohCiM5Q&s')">+ Add</button>
+            </div>
+          </div>
+          <div class="suggest-card">
+            <img src="https://images.unsplash.com/photo-1617897903246-719242758050?w=300&q=80" alt=""/>
+            <div class="suggest-card-body">
+              <div class="suggest-card-name">Brightening Serum</div>
+              <div class="suggest-card-price">₹499</div>
+              <button class="suggest-add-btn" onclick="addFromSuggested('Coffee Culture Brightening Serum',499,999,'https://images.unsplash.com/photo-1617897903246-719242758050?w=300&q=80')">+ Add</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ STEP 2: ADDRESS ══ -->
+    <div class="step-panel" id="panel-1">
+      <h2 class="panel-heading">Delivery Address</h2>
+
+      <!-- Saved Addresses -->
+      <div class="saved-addresses">
+        <div class="saved-addr-head">📍 Saved Addresses</div>
+        <div id="savedAddressesList">
+          <p style="font-size:0.82rem;color:var(--muted);">Loading your addresses...</p>
+        </div>
+      </div>
+
+      <button class="add-new-btn" onclick="toggleNewAddr()">+ Add New Address</button>
+
+      <div class="new-addr-form" id="newAddrForm">
+        <h3 style="font-size:0.85rem;font-weight:800;margin-bottom:14px;color:var(--dark)">New Delivery Address</h3>
+        <div class="address-type-row">
+          <button class="addr-type-btn selected" onclick="selectAddrType(this)">🏠 Home</button>
+          <button class="addr-type-btn" onclick="selectAddrType(this)">💼 Work</button>
+          <button class="addr-type-btn" onclick="selectAddrType(this)">📍 Other</button>
+        </div>
+        <div class="address-grid">
+          <div class="form-group" id="fg-fname">
+            <label>First Name *</label>
+            <input type="text" id="fname" placeholder="Priya"/>
+            <span class="form-error">Required</span>
+          </div>
+          <div class="form-group" id="fg-lname">
+            <label>Last Name *</label>
+            <input type="text" id="lname" placeholder="Sharma"/>
+            <span class="form-error">Required</span>
+          </div>
+        </div>
+        <div class="address-grid">
+          <div class="form-group" id="fg-phone">
+            <label>Phone Number *</label>
+            <input type="tel" id="phone" placeholder="+91 98765 43210"/>
+            <span class="form-error">Enter valid 10-digit number</span>
+          </div>
+          <div class="form-group" id="fg-pincode">
+            <label>Pincode *</label>
+            <input type="text" id="pincode" placeholder="560001" maxlength="6" oninput="fetchPincode(this.value)"/>
+            <span class="form-error">Enter valid 6-digit pincode</span>
+          </div>
+        </div>
+        <div class="address-grid full">
+          <div class="form-group" id="fg-address1">
+            <label>Address Line 1 *</label>
+            <input type="text" id="address1" placeholder="House no., Street, Area"/>
+            <span class="form-error">Required</span>
+          </div>
+        </div>
+        <div class="address-grid full">
+          <div class="form-group">
+            <label>Address Line 2</label>
+            <input type="text" id="address2" placeholder="Landmark, Colony (optional)"/>
+          </div>
+        </div>
+        <div class="address-grid">
+          <div class="form-group" id="fg-city">
+            <label>City *</label>
+            <input type="text" id="city" placeholder="Bengaluru"/>
+            <span class="form-error">Required</span>
+          </div>
+          <div class="form-group" id="fg-state">
+            <label>State *</label>
+            <select id="state">
+              <option value="">Select State</option>
+              <option>Andhra Pradesh</option><option>Arunachal Pradesh</option><option>Assam</option><option>Bihar</option><option>Chhattisgarh</option><option>Goa</option><option>Gujarat</option><option>Haryana</option><option>Himachal Pradesh</option><option>Jharkhand</option><option>Karnataka</option><option>Kerala</option><option>Madhya Pradesh</option><option>Maharashtra</option><option>Manipur</option><option>Meghalaya</option><option>Mizoram</option><option>Nagaland</option><option>Odisha</option><option>Punjab</option><option>Rajasthan</option><option>Sikkim</option><option>Tamil Nadu</option><option>Telangana</option><option>Tripura</option><option>Uttar Pradesh</option><option>Uttarakhand</option><option>West Bengal</option><option>Delhi</option><option>Jammu & Kashmir</option>
+            </select>
+            <span class="form-error">Required</span>
+          </div>
+        </div>
+        <div style="margin-top:14px">
+          <label class="filter-check" style="font-size:0.8rem;gap:8px;display:flex;align-items:center;cursor:pointer">
+            <input type="checkbox" style="accent-color:var(--pink);width:14px;height:14px"/>
+            Set as default delivery address
+          </label>
+        </div>
+        <button onclick="saveNewAddress()" style="margin-top:16px;padding:11px 28px;background:var(--pink);color:#fff;border:none;border-radius:6px;font-family:'Nunito',sans-serif;font-size:0.82rem;font-weight:800;cursor:pointer;text-transform:uppercase;letter-spacing:.06em;">Save Address</button>
+      </div>
+    </div>
+
+    <!-- ══ STEP 3: PAYMENT ══ -->
+    <div class="step-panel" id="panel-2">
+      <h2 class="panel-heading">Payment Method</h2>
+
+      <!-- Address Summary -->
+      <div class="addr-summary" id="addrSummary">
+        <h4>🚚 Delivering to</h4>
+        <p id="addrSummaryText">Priya Sharma · Plot 12, Rose Garden, MG Road, Bengaluru, Karnataka – 560001</p>
+        <span class="edit-link" onclick="goStep(1)">Change Address</span>
+      </div>
+
+      <div class="payment-methods">
+        <!-- Razorpay: covers Card / UPI / NetBanking / Wallets in one secure checkout -->
+        <div class="pay-option selected" id="pay-razorpay" onclick="selectPay('razorpay')">
+          <div class="pay-header">
+            <input type="radio" name="payMethod" checked/>
+            <span class="pay-icon">💳</span>
+            <div><div class="pay-label">Pay Online</div><div class="pay-sub">Card, UPI, Net Banking & Wallets via Razorpay (secure)</div></div>
+          </div>
+          <div class="pay-body">
+            <p style="font-size:0.8rem;color:var(--muted);">You'll be redirected to Razorpay's secure checkout to complete payment using any method — card, UPI, net banking, or wallet.</p>
+          </div>
+        </div>
+        <!-- COD -->
+        <div class="pay-option" id="pay-cod" onclick="selectPay('cod')">
+          <div class="pay-header">
+            <input type="radio" name="payMethod"/>
+            <span class="pay-icon">💵</span>
+            <div><div class="pay-label">Cash on Delivery</div><div class="pay-sub">Pay when you receive</div></div>
+          </div>
+          <div class="pay-body">
+            <p class="cod-note">💡 Cash on Delivery is available for orders up to ₹5,000. Exact change is appreciated!</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ STEP 4: ORDER SUCCESS ══ -->
+    <div class="step-panel" id="panel-3">
+      <div class="order-success">
+        <div class="success-icon">🎉</div>
+        <h2>Order Confirmed!</h2>
+        <p>Thank you for shopping with Suka Beauty</p>
+        <p class="order-id" id="orderId">Order #SB-2026-XXXXX</p>
+        <div style="text-align:left;max-width:400px;margin:0 auto">
+          <div class="order-detail-row"><span class="lbl">Estimated Delivery</span><span class="val">3–5 Business Days</span></div>
+          <div class="order-detail-row"><span class="lbl">Shipping To</span><span class="val" id="confAddress">—</span></div>
+          <div class="order-detail-row"><span class="lbl">Payment</span><span class="val" id="confPayment">—</span></div>
+          <div class="order-detail-row"><span class="lbl">Order Total</span><span class="val" id="confTotal">—</span></div>
+        </div>
+        <div style="margin-top:24px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+          <button class="track-btn" onclick="window.location.href='orders.html'">Track Order</button>
+          <button class="track-btn" onclick="if(lastOrder) OrderAPI.downloadInvoice(lastOrder.id, 'invoice-'+lastOrder.orderNumber+'.pdf').catch(e=>sbToast(e.message,true))">Download Invoice</button>
+          <button class="continue-shop" onclick="window.location.href='Home.html'">Continue Shopping</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /checkout-left -->
+
+  <!-- RIGHT SIDEBAR -->
+  <div class="cart-right">
+    <div class="price-card">
+      <div class="price-card-head">
+        <h3>Price Details</h3>
+        <span id="itemCountLabel">0 Items</span>
+      </div>
+      <!-- Order items mini list (shown on payment step) -->
+      <div class="order-summary-items" id="orderSummaryItems" style="display:none"></div>
+
+      <div class="price-rows">
+        <div class="price-row"><span class="label">Product Price</span><span class="val" id="priceSubtotal">₹0</span></div>
+        <div class="price-row"><span class="label">Total Discounts</span><span class="val discount" id="priceDiscount">– ₹0</span></div>
+        <div class="price-row"><span class="label">Delivery Charges</span><span class="val free">FREE</span></div>
+      </div>
+      <div class="price-total-row">
+        <span class="label">Order Total</span>
+        <span class="val" id="priceTotal">₹0</span>
+      </div>
+      <div class="savings-banner" id="savingsBanner" style="display:none">
+        🎉 You're saving <strong id="savingsAmt">&nbsp;₹0</strong> on this order!
+      </div>
+
+      <div class="coupon-section" id="couponSection">
+        <div class="coupon-label">🏷️ Apply Coupon</div>
+        <div class="coupon-row">
+          <input type="text" id="couponInput" placeholder="SUKA15"/>
+          <button onclick="applyCoupon()">Apply</button>
+        </div>
+        <div class="coupon-applied" id="couponMsg">✓ Coupon SUKA15 applied — ₹50 extra off!</div>
+      </div>
+
+      <div class="checkout-section">
+        <p class="note-text" id="noteText">Clicking 'Continue' will not deduct any money</p>
+        <button class="continue-btn" id="continueBtn" onclick="nextStep()">Continue →</button>
+        <button class="back-btn" id="backBtn" onclick="prevStep()" style="display:none">← Go Back</button>
+      </div>
+
+      <div class="safety-banner">
+        <div class="s-icon">🛡️</div>
+        <div>
+          <h4>Your Safety, Our Priority</h4>
+          <p>Safe & secure payments. Easy returns. 100% authentic products.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /checkout-page -->
+
+<footer><p>© 2026 <span>Suka Beauty</span>. All rights reserved. Cruelty-Free · Vegan · Made with ❤️</p></footer>
+<div class="toast" id="toast"></div>
+
+<script>
+if (!requireLogin('cart.html')) { /* redirected to login */ }
+
+function renderAuthArea() {
+  const el = document.getElementById('authArea');
+  if (!el) return;
+  if (Auth.isLoggedIn()) {
+    const user = Auth.getUser();
+    el.innerHTML = `
+      <a href="orders.html" class="nav-btn nav-btn-outline">My Orders</a>
+      <a href="account.html" class="nav-btn nav-btn-outline">${(user && user.name) ? user.name.split(' ')[0] : 'Account'}</a>
+      <a href="#" class="nav-btn nav-btn-fill" onclick="Auth.logout();return false;">Logout</a>`;
+  } else {
+    el.innerHTML = `
+      <a href="login.html" class="nav-btn nav-btn-outline">Login</a>
+      <a href="register.html" class="nav-btn nav-btn-fill">Register</a>`;
+  }
+}
+renderAuthArea();
+
+// ─── STATE ───
+let currentStep = 0;
+let couponApplied = false;
+let selectedPayMethod = 'razorpay';
+let selectedAddressId = null;
+let cachedCart = [];
+let addresses = [];
+let lastOrder = null;
+
+// ─── CART DATA (backend-persisted) ───
+async function getCart() {
+  try { cachedCart = await CartAPI.list(); } catch (e) { cachedCart = []; }
+  return cachedCart;
+}
+
+// ─── STEP NAVIGATION ───
+const stepLabels = ['My Cart', 'Delivery Address', 'Payment', 'Order Confirmed'];
+const ctaBtns    = ['Proceed to Address →', 'Proceed to Payment →', 'Place Order →', ''];
+
+function goStep(s) {
+  if (s > currentStep && s !== currentStep + 1) return;
+  currentStep = s;
+  renderAll();
+}
+async function nextStep() {
+  if (currentStep === 0) {
+    const cart = await getCart();
+    if (!cart.length) { sbToast('⚠️ Your cart is empty!', true); return; }
+    currentStep = 1;
+    await loadAddresses();
+  } else if (currentStep === 1) {
+    if (!selectedAddressId) { sbToast('⚠️ Please select or add a delivery address', true); return; }
+    currentStep = 2;
+    buildAddrSummary();
+    showOrderSummaryItems();
+  } else if (currentStep === 2) {
+    await placeOrder();
+    return;
+  }
+  renderAll();
+}
+function prevStep() {
+  if (currentStep > 0) { currentStep--; renderAll(); }
+}
+
+async function renderAll() {
+  document.querySelectorAll('.step-panel').forEach((p, i) => p.classList.toggle('active', i === currentStep));
+  document.querySelectorAll('.step').forEach((s, i) => {
+    s.classList.toggle('active', i === currentStep);
+    s.classList.toggle('done', i < currentStep);
+  });
+  document.getElementById('breadLabel').textContent = stepLabels[currentStep];
+  const btn = document.getElementById('continueBtn');
+  btn.style.display = currentStep === 3 ? 'none' : 'block';
+  btn.textContent = ctaBtns[currentStep];
+  document.getElementById('backBtn').style.display = currentStep > 0 && currentStep < 3 ? 'block' : 'none';
+  document.getElementById('noteText').style.display = currentStep < 2 ? 'block' : 'none';
+
+  await renderCartItems();
+  await recalculate();
+}
+
+// ─── CART RENDERING ───
+async function renderCartItems() {
+  const cart = await getCart();
+  const container = document.getElementById('cartItems');
+  const empty = document.getElementById('emptyCart');
+  const suggest = document.getElementById('suggestSection');
+
+  if (!cart.length) {
+    container.innerHTML = '';
+    empty.style.display = 'block';
+    suggest.style.display = 'none';
+    document.getElementById('continueBtn').disabled = true;
+    return;
+  }
+  empty.style.display = 'none';
+  suggest.style.display = 'block';
+  document.getElementById('continueBtn').disabled = false;
+
+  container.innerHTML = cart.map(item => {
+    const p = item.Product || {};
+    const price = p.discountPrice || p.price || 0;
+    const oldPrice = p.discountPrice ? p.price : price;
+    const img = (p.images && p.images[0]) || '';
+    return `
+    <div class="cart-item" id="ci-${item.id}">
+      <div class="cart-item-body">
+        <img class="item-img" src="${img}" alt="${p.name}" onerror="this.onerror=null;this.src='https://via.placeholder.com/90x90/fce8ec/e8748a?text=SB'"/>
+        <div class="item-details">
+          <div class="item-name">${p.name}</div>
+          <div class="item-price-row">
+            <span class="item-price">₹${price.toLocaleString('en-IN')}</span>
+            ${oldPrice > price ? `<span class="item-price-old">₹${oldPrice.toLocaleString('en-IN')}</span><span class="item-discount">${Math.round((1 - price / oldPrice) * 100)}% Off</span>` : ''}
+          </div>
+          <div class="item-tags">
+            <span class="item-tag">✓ Easy Returns</span>
+            <span class="item-tag">Free Delivery</span>
+          </div>
+          <div class="item-qty-row">
+            <span class="qty-label">Qty:</span>
+            <div class="qty-ctrl">
+              <button class="qty-btn" onclick="changeQty(${item.id}, ${item.quantity - 1})">−</button>
+              <input class="qty-num" type="text" value="${item.quantity}" readonly/>
+              <button class="qty-btn" onclick="changeQty(${item.id}, ${item.quantity + 1})">+</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="cart-item-footer">
+        <div class="seller-info">Sold by: <span>SUKA BEAUTY OFFICIAL</span></div>
+        <div class="item-actions">
+          <span class="delivery-badge">✓ Free Delivery</span>
+          <button class="action-btn action-remove" onclick="removeItem(${item.id})">✕ REMOVE</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function changeQty(cartItemId, newQty) {
+  if (newQty < 1) { sbToast('⚠️ Minimum quantity is 1', true); return; }
+  if (newQty > 10) { sbToast('⚠️ Max 10 per item', true); return; }
+  try {
+    await CartAPI.update(cartItemId, newQty);
+    await renderAll();
+  } catch (err) { sbToast(err.message || 'Could not update quantity', true); }
+}
+
+async function removeItem(cartItemId) {
+  const el = document.getElementById('ci-' + cartItemId);
+  if (el) { el.style.opacity = '0'; el.style.transform = 'translateX(30px)'; el.style.transition = 'all .3s'; }
+  try {
+    await CartAPI.remove(cartItemId);
+    setTimeout(async () => { await renderAll(); sbToast('🗑️ Item removed'); }, 250);
+  } catch (err) { sbToast(err.message || 'Could not remove item', true); }
+}
+
+function addFromSuggested(name) {
+  // Demo cross-sell strip uses illustrative products; direct shoppers to the full catalog to add real items.
+  sbToast(`Browse Home to add "${name}" — this demo strip isn't a live product.`);
+}
+
+// ─── PRICE ───
+async function recalculate() {
+  const cart = await getCart();
+  let sub = 0, disc = 0, count = 0;
+  cart.forEach(item => {
+    const p = item.Product || {};
+    const price = p.discountPrice || p.price || 0;
+    const oldPrice = p.discountPrice ? p.price : price;
+    sub += oldPrice * item.quantity;
+    disc += (oldPrice - price) * item.quantity;
+    count += item.quantity;
+  });
+  if (couponApplied) disc += 50;
+  const total = sub - disc;
+
+  document.getElementById('priceSubtotal').textContent = '+ ₹' + sub.toLocaleString('en-IN');
+  document.getElementById('priceDiscount').textContent = '– ₹' + disc.toLocaleString('en-IN');
+  document.getElementById('priceTotal').textContent = '₹' + total.toLocaleString('en-IN');
+  document.getElementById('itemCountLabel').textContent = count + ' Item' + (count !== 1 ? 's' : '');
+  document.getElementById('cartBadge').textContent = count;
+
+  const sb = document.getElementById('savingsBanner');
+  if (disc > 0) { sb.style.display = 'flex'; document.getElementById('savingsAmt').textContent = ' ₹' + disc.toLocaleString('en-IN'); }
+  else sb.style.display = 'none';
+}
+
+function applyCoupon() {
+  const code = document.getElementById('couponInput').value.trim().toUpperCase();
+  const msg = document.getElementById('couponMsg');
+  if (code === 'SUKA15') {
+    couponApplied = true;
+    msg.classList.add('show');
+    recalculate();
+    sbToast('🎉 Coupon applied! ₹50 extra off');
+  } else if (!code) {
+    sbToast('⚠️ Enter a coupon code', true);
+  } else {
+    couponApplied = false;
+    msg.classList.remove('show');
+    sbToast('❌ Invalid coupon code', true);
+  }
+}
+
+// ─── ADDRESS (backend-persisted) ───
+async function loadAddresses() {
+  const container = document.getElementById('savedAddressesList');
+  try {
+    addresses = await UserAPI.listAddresses();
+  } catch (e) {
+    addresses = [];
+  }
+  if (!addresses.length) {
+    container.innerHTML = `<p style="font-size:0.82rem;color:var(--muted);">No saved addresses yet. Add one below.</p>`;
+    selectedAddressId = null;
+    return;
+  }
+  if (!selectedAddressId) {
+    const def = addresses.find(a => a.isDefault) || addresses[0];
+    selectedAddressId = def.id;
+  }
+  container.innerHTML = addresses.map(a => `
+    <div class="saved-addr-card ${a.id === selectedAddressId ? 'selected' : ''}" onclick="selectAddr(${a.id})">
+      <input type="radio" name="savedAddr" ${a.id === selectedAddressId ? 'checked' : ''}/>
+      <div class="saved-addr-name">${a.fullName}</div>
+      <div class="saved-addr-text">${a.line1}${a.line2 ? ', ' + a.line2 : ''},<br/>${a.city}, ${a.state} – ${a.pincode}<br/>📞 ${a.phone}</div>
+      <span class="saved-addr-tag">${a.label === 'Work' ? '💼' : a.label === 'Other' ? '📍' : '🏠'} ${a.label}</span>
+    </div>`).join('');
+}
+
+function selectAddr(id) {
+  selectedAddressId = id;
+  document.querySelectorAll('.saved-addr-card').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('.saved-addr-card input[type="radio"]').forEach(r => r.checked = false);
+  loadAddresses(); // re-render with the new selection highlighted
+}
+
+function toggleNewAddr() {
+  document.getElementById('newAddrForm').classList.toggle('open');
+}
+
+let selectedAddrType = 'Home';
+function selectAddrType(btn) {
+  document.querySelectorAll('.addr-type-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedAddrType = btn.textContent.trim().split(' ').slice(1).join(' ') || 'Home';
+}
+
+function fetchPincode(val) {
+  if (val.length === 6) sbToast('📍 Pincode ' + val + ' verified!');
+}
+
+async function saveNewAddress() {
+  let valid = true;
+  const fields = [
+    { id: 'fname', fg: 'fg-fname', check: v => v.trim().length > 0 },
+    { id: 'lname', fg: 'fg-lname', check: v => v.trim().length > 0 },
+    { id: 'phone', fg: 'fg-phone', check: v => /^\+?[\d\s]{10,}$/.test(v) },
+    { id: 'pincode', fg: 'fg-pincode', check: v => /^\d{6}$/.test(v) },
+    { id: 'address1', fg: 'fg-address1', check: v => v.trim().length > 0 },
+    { id: 'city', fg: 'fg-city', check: v => v.trim().length > 0 },
+    { id: 'state', fg: 'fg-state', check: v => v !== '' },
+  ];
+  fields.forEach(f => {
+    const el = document.getElementById(f.id);
+    const fg = document.getElementById(f.fg);
+    if (!f.check(el.value)) { fg.classList.add('error'); valid = false; }
+    else fg.classList.remove('error');
+  });
+  if (!valid) { sbToast('⚠️ Please fill all required fields', true); return; }
+
+  const fullName = document.getElementById('fname').value.trim() + ' ' + document.getElementById('lname').value.trim();
+  const isDefaultChecked = document.querySelector('#newAddrForm input[type="checkbox"]').checked;
+
+  try {
+    const created = await UserAPI.createAddress({
+      label: selectedAddrType,
+      fullName,
+      phone: document.getElementById('phone').value.trim(),
+      line1: document.getElementById('address1').value.trim(),
+      line2: document.getElementById('address2').value.trim(),
+      city: document.getElementById('city').value.trim(),
+      state: document.getElementById('state').value,
+      pincode: document.getElementById('pincode').value.trim(),
+      isDefault: isDefaultChecked,
+    });
+    selectedAddressId = created.id;
+    sbToast('✓ Address saved!');
+    document.getElementById('newAddrForm').classList.remove('open');
+    await loadAddresses();
+  } catch (err) {
+    sbToast(err.message || 'Could not save address', true);
+  }
+}
+
+function buildAddrSummary() {
+  const a = addresses.find(x => x.id === selectedAddressId);
+  const txt = document.getElementById('addrSummaryText');
+  if (txt && a) txt.textContent = `${a.fullName} · ${a.line1}${a.line2 ? ', ' + a.line2 : ''}, ${a.city}, ${a.state} – ${a.pincode}`;
+}
+
+// ─── PAYMENT ───
+function selectPay(id) {
+  selectedPayMethod = id;
+  document.querySelectorAll('.pay-option').forEach(o => o.classList.remove('selected'));
+  document.getElementById('pay-' + id).classList.add('selected');
+  document.querySelectorAll('.pay-option input[type="radio"]').forEach(r => r.checked = false);
+  document.querySelector('#pay-' + id + ' input[type="radio"]').checked = true;
+}
+
+// ─── PLACE ORDER (real backend + Razorpay) ───
+async function placeOrder() {
+  const btn = document.getElementById('continueBtn');
+  const original = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Placing order...';
+
+  try {
+    const res = await OrderAPI.create({ addressId: selectedAddressId, paymentMethod: selectedPayMethod });
+
+    if (selectedPayMethod === 'cod') {
+      lastOrder = res.order;
+      showConfirmation(res.order, 'Cash on Delivery');
+      return;
+    }
+
+    // Razorpay flow
+    const { order, razorpay } = res;
+    const rzp = new Razorpay({
+      key: razorpay.keyId,
+      amount: razorpay.amount,
+      currency: razorpay.currency,
+      order_id: razorpay.orderId,
+      name: 'Suka Beauty',
+      description: `Order ${order.orderNumber}`,
+      theme: { color: '#e8748a' },
+      handler: async function (response) {
+        try {
+          const verifyRes = await OrderAPI.verifyPayment({
+            orderId: order.id,
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature,
+          });
+          lastOrder = verifyRes.order;
+          showConfirmation(verifyRes.order, 'Paid Online (Razorpay)');
+        } catch (err) {
+          sbToast(err.message || 'Payment verification failed', true);
+          btn.disabled = false; btn.textContent = original;
+        }
+      },
+      modal: {
+        ondismiss: function () {
+          sbToast('Payment cancelled', true);
+          btn.disabled = false; btn.textContent = original;
+        },
+      },
+    });
+    rzp.open();
+  } catch (err) {
+    sbToast(err.message || 'Could not place order', true);
+    btn.disabled = false;
+    btn.textContent = original;
+  }
+}
+
+function showConfirmation(order, paymentLabel) {
+  document.getElementById('orderId').textContent = 'Order #' + order.orderNumber;
+  document.getElementById('confAddress').textContent = order.shippingName + ', ' + order.shippingCity;
+  document.getElementById('confPayment').textContent = paymentLabel;
+  document.getElementById('confTotal').textContent = '₹' + order.total.toLocaleString('en-IN');
+  currentStep = 3;
+  renderAll();
+  sbToast('🎉 Order placed successfully!');
+}
+
+// ─── ORDER SUMMARY SIDEBAR ───
+async function showOrderSummaryItems() {
+  const cart = await getCart();
+  const container = document.getElementById('orderSummaryItems');
+  if (!cart.length) { container.style.display = 'none'; return; }
+  container.style.display = 'block';
+  container.innerHTML = cart.map(item => {
+    const p = item.Product || {};
+    const price = p.discountPrice || p.price || 0;
+    const img = (p.images && p.images[0]) || '';
+    return `
+    <div class="osi">
+      <img src="${img}" alt="${p.name}" onerror="this.onerror=null;this.src='https://via.placeholder.com/48x48/fce8ec/e8748a?text=SB'"/>
+      <div class="osi-info">
+        <div class="osi-name">${p.name}</div>
+        <div class="osi-qty">Qty: ${item.quantity}</div>
+      </div>
+      <div class="osi-price">₹${(price * item.quantity).toLocaleString('en-IN')}</div>
+    </div>`;
+  }).join('');
+}
+
+// ─── INIT ───
+renderAll();
+</script>
+</body>
+</html>

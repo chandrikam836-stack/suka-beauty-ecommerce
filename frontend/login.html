@@ -1,0 +1,344 @@
+Suka beauty login · HTML
+Copy
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Suka Beauty – Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet"/>
+<script src="js/api.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+ 
+  :root {
+    --pink:   #e8748a;
+    --rose:   #f5c6ce;
+    --dark:   #2d1f24;
+    --muted:  #9a7a82;
+    --light:  #fff8f9;
+    --white:  #ffffff;
+  }
+ 
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--light);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+ 
+  /* NAV */
+  nav {
+    background: var(--white);
+    padding: 16px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 2px solid #fce8ec;
+  }
+  .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--pink);
+    text-decoration: none;
+  }
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  nav a.home-link {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  nav a.home-link:hover { color: var(--pink); }
+  .btn-signup {
+    padding: 9px 20px;
+    background: var(--pink);
+    color: #fff;
+    border: none;
+    border-radius: 25px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .btn-signup:hover { background: #d45f75; }
+ 
+  /* PAGE */
+  .page {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+  }
+ 
+  /* CARD */
+  .card {
+    background: var(--white);
+    border-radius: 20px;
+    padding: 44px 44px 36px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 6px 28px rgba(232,116,138,0.13);
+    animation: fadeUp 0.35s ease;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+ 
+  .card-top {
+    text-align: center;
+    margin-bottom: 28px;
+  }
+  .card-top .icon { font-size: 2.8rem; margin-bottom: 10px; }
+  .card-top h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.75rem;
+    color: var(--dark);
+    margin-bottom: 6px;
+  }
+  .card-top p {
+    font-size: 0.83rem;
+    color: var(--muted);
+  }
+ 
+  /* FIELDS */
+  .field { margin-bottom: 18px; }
+  .field label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 6px;
+  }
+  .field input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #fce8ec;
+    border-radius: 12px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.9rem;
+    color: var(--dark);
+    background: var(--light);
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .field input:focus {
+    border-color: var(--pink);
+    background: #fff;
+  }
+  .field input.error { border-color: #e05555; }
+  .err-msg {
+    font-size: 0.72rem;
+    color: #e05555;
+    margin-top: 4px;
+    display: none;
+  }
+  .err-msg.show { display: block; }
+ 
+  /* BTN */
+  .btn-login {
+    width: 100%;
+    padding: 13px;
+    background: var(--pink);
+    color: #fff;
+    border: none;
+    border-radius: 25px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.92rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+    margin-top: 4px;
+    margin-bottom: 20px;
+  }
+  .btn-login:hover { background: #d45f75; }
+  .btn-login:active { transform: scale(0.98); }
+ 
+  /* DIVIDER */
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-bottom: 18px;
+  }
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #fce8ec;
+  }
+ 
+  /* SOCIAL */
+  .social-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 22px;
+  }
+  .social-btn {
+    padding: 10px;
+    background: var(--light);
+    border: 2px solid #fce8ec;
+    border-radius: 12px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--dark);
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .social-btn:hover { border-color: var(--pink); }
+ 
+  .footer-txt {
+    text-align: center;
+    font-size: 0.82rem;
+    color: var(--muted);
+  }
+  .footer-txt a {
+    color: var(--pink);
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .footer-txt a:hover { text-decoration: underline; }
+ 
+  /* SUCCESS */
+  .success { display: none; text-align: center; }
+  .success.show { display: block; }
+  .success .s-icon { font-size: 3.5rem; margin-bottom: 14px; }
+  .success h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    color: var(--dark);
+    margin-bottom: 8px;
+  }
+  .success p { font-size: 0.85rem; color: var(--muted); margin-bottom: 22px; }
+  .success a {
+    display: inline-block;
+    padding: 12px 30px;
+    background: var(--pink);
+    color: #fff;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: 800;
+    font-size: 0.85rem;
+  }
+  .success a:hover { background: #d45f75; }
+</style>
+</head>
+<body>
+ 
+<!-- NAV -->
+<nav>
+  <a href="Home.html" class="logo">Suka Beauty 💋</a>
+  <div class="nav-right">
+    <a href="Home.html" class="home-link">← Home</a>
+    <a href="register.html" class="btn-signup">Sign Up</a>
+  </div>
+</nav>
+ 
+<!-- PAGE -->
+<div class="page">
+  <div class="card">
+ 
+    <!-- FORM -->
+    <div id="formSection">
+      <div class="card-top">
+        <div class="icon">💄</div>
+        <h1>Welcome Back</h1>
+        <p>Sign in to your Suka Beauty account</p>
+      </div>
+ 
+      <div class="field">
+        <label for="inEmail">Email Address</label>
+        <input type="email" id="inEmail" placeholder="you@example.com" autocomplete="email"/>
+        <p class="err-msg" id="errName">Please enter a valid email.</p>
+      </div>
+ 
+      <div class="field">
+        <label for="inPwd">Password</label>
+        <input type="password" id="inPwd" placeholder="Your password" autocomplete="current-password"/>
+        <p class="err-msg" id="errPwd">Please enter your password.</p>
+      </div>
+
+      <p style="text-align:right; margin-bottom:14px;"><a href="forgot-password.html" style="font-size:0.78rem; color:var(--pink); font-weight:700; text-decoration:none;">Forgot password?</a></p>
+ 
+      <button class="btn-login" onclick="doLogin()">Login →</button>
+
+ 
+      <p class="footer-txt">No account? <a href="register.html">Sign up free →</a></p>
+    </div>
+ 
+    <!-- SUCCESS -->
+    <div class="success" id="successSection">
+      <div class="s-icon">🌸</div>
+      <h2>Welcome back!</h2>
+      <p>You're signed in to Suka Beauty. Let's explore your glow.</p>
+      <a href="Home.html">Go to Home →</a>
+    </div>
+ 
+  </div>
+</div>
+ 
+<script>
+  async function doLogin() {
+    const eVal = document.getElementById('inEmail').value.trim();
+    const p    = document.getElementById('inPwd').value.trim();
+    const eEl  = document.getElementById('inEmail');
+    const pEl  = document.getElementById('inPwd');
+    const nErr = document.getElementById('errName');
+    const pErr = document.getElementById('errPwd');
+
+    eEl.classList.remove('error'); nErr.classList.remove('show');
+    pEl.classList.remove('error'); pErr.classList.remove('show');
+
+    if (!eVal || !eVal.includes('@')) { eEl.classList.add('error'); nErr.classList.add('show'); }
+    if (!p) { pEl.classList.add('error'); pErr.classList.add('show'); }
+    if (!eVal || !p) return;
+
+    const btn = document.querySelector('.btn-login');
+    const originalText = btn.textContent;
+    btn.textContent = 'Signing in...';
+    btn.disabled = true;
+
+    try {
+      const data = await AuthAPI.login({ email: eVal, password: p });
+      Auth.setToken(data.token);
+      Auth.setUser(data.user);
+      document.getElementById('formSection').style.display = 'none';
+      document.getElementById('successSection').classList.add('show');
+
+      const params = new URLSearchParams(window.location.search);
+      const next = params.get('next');
+      setTimeout(() => {
+        if (data.user.role === 'admin') window.location.href = 'admin.html';
+        else window.location.href = next || 'Home.html';
+      }, 1200);
+    } catch (err) {
+      sbToast(err.message || 'Login failed', true);
+      btn.textContent = originalText;
+      btn.disabled = false;
+    }
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+</script>
+ 
+</body>
+</html>

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>My Orders – Suka Beauty</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet"/>
+<script src="js/api.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root { --pink:#e8748a; --dark:#1a1a1a; --muted:#777; --light:#fafafa; }
+  body { font-family:'Nunito',sans-serif; background:var(--light); color:var(--dark); }
+  nav { background:#fff; padding:14px 40px; display:flex; align-items:center; justify-content:space-between; border-bottom:2px solid #fce8ec; flex-wrap:wrap; gap:8px 16px; }
+  @media (max-width:480px) { nav { padding:12px 16px; } .nav-right a { margin-left:0; margin-right:14px; white-space:nowrap; } }
+  .logo { font-family:'Playfair Display',serif; font-size:1.4rem; font-weight:700; color:var(--pink); text-decoration:none; }
+  .nav-right a { font-size:0.82rem; color:var(--muted); text-decoration:none; margin-left:18px; font-weight:700; }
+  .wrap { max-width:900px; margin:0 auto; padding:32px 24px; }
+  h1 { font-family:'Playfair Display',serif; font-size:1.7rem; margin-bottom:20px; }
+  .order-card { background:#fff; border-radius:12px; padding:20px; margin-bottom:16px; box-shadow:0 2px 10px rgba(0,0,0,.04); }
+  .order-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; flex-wrap:wrap; gap:8px; }
+  .order-num { font-weight:800; font-size:0.95rem; }
+  .order-date { font-size:0.78rem; color:var(--muted); }
+  .status-badge { display:inline-block; padding:5px 12px; border-radius:14px; font-size:0.72rem; font-weight:800; text-transform:uppercase; letter-spacing:.03em; }
+  .status-placed, .status-packed { background:#fff3cd; color:#8a6d1a; }
+  .status-shipped, .status-out_for_delivery { background:#d6ebff; color:#1a5a8a; }
+  .status-delivered { background:#d4f4dd; color:#1a7a3a; }
+  .status-cancelled, .status-rejected_return { background:#fde0e0; color:#a32a2a; }
+  .status-return_requested, .status-return_approved { background:#f0e0fd; color:#6a2aa3; }
+  .status-returned, .status-refunded { background:#e5e5e5; color:#555; }
+  .order-item-row { display:flex; align-items:center; gap:12px; padding:8px 0; border-top:1px solid #f2f2f2; }
+  .order-item-row img { width:48px; height:48px; object-fit:cover; border-radius:6px; }
+  .order-item-row .oi-name { font-size:0.84rem; font-weight:600; flex:1; }
+  .order-item-row .oi-qty { font-size:0.78rem; color:var(--muted); }
+  .order-item-row .oi-price { font-size:0.84rem; font-weight:700; }
+  .order-total-row { display:flex; justify-content:space-between; margin-top:12px; padding-top:12px; border-top:2px solid #f2f2f2; font-weight:800; }
+  .order-eta { font-size:0.78rem; color:var(--muted); margin-top:4px; }
+  .action-row { display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; }
+  .action-row button { padding:8px 16px; border-radius:20px; font-size:0.78rem; font-weight:800; cursor:pointer; border:2px solid #fce8ec; background:#fff; color:var(--dark); }
+  .action-row button:hover { border-color:var(--pink); }
+  .action-row button.danger { color:#a32a2a; }
+  .action-row button.primary { background:var(--pink); color:#fff; border-color:var(--pink); }
+  .empty { text-align:center; padding:60px 20px; color:var(--muted); }
+  .empty a { color:var(--pink); font-weight:700; text-decoration:none; }
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.4); display:none; align-items:center; justify-content:center; z-index:999; }
+  .modal-overlay.open { display:flex; }
+  .modal-box { background:#fff; border-radius:12px; padding:24px; max-width:380px; width:90%; }
+  .modal-box h3 { font-family:'Playfair Display',serif; margin-bottom:12px; }
+  .modal-box textarea { width:100%; padding:10px; border:2px solid #fce8ec; border-radius:8px; min-height:70px; margin-bottom:14px; font-family:'Nunito',sans-serif; }
+  .modal-box .modal-actions { display:flex; gap:10px; justify-content:flex-end; }
+  .modal-box button { padding:9px 18px; border-radius:20px; border:none; font-weight:800; font-size:0.8rem; cursor:pointer; }
+  .modal-cancel { background:#eee; color:#333; }
+  .modal-confirm { background:var(--pink); color:#fff; }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="Home.html" class="logo">Suka Beauty 💋</a>
+  <div class="nav-right">
+    <a href="Home.html">← Back to Shop</a>
+    <a href="account.html">My Account</a>
+  </div>
+</nav>
+
+<div class="wrap">
+  <h1>My Orders</h1>
+  <div id="ordersList"><p>Loading...</p></div>
+</div>
+
+<!-- Cancel/Return reason modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-box">
+    <h3 id="modalTitle">Cancel Order</h3>
+    <textarea id="modalReason" placeholder="Tell us why (optional)"></textarea>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeModal()">Close</button>
+      <button class="modal-confirm" onclick="confirmModalAction()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  if (!requireLogin('orders.html')) { /* redirected */ }
+
+  const statusLabels = {
+    placed: 'Placed', packed: 'Packed', shipped: 'Shipped', out_for_delivery: 'Out for Delivery',
+    delivered: 'Delivered', cancelled: 'Cancelled', return_requested: 'Return Requested',
+    return_approved: 'Return Approved', returned: 'Returned', refunded: 'Refunded', rejected_return: 'Return Rejected',
+  };
+
+  let modalMode = null; // 'cancel' | 'return'
+  let modalOrderId = null;
+
+  function openModal(mode, orderId) {
+    modalMode = mode;
+    modalOrderId = orderId;
+    document.getElementById('modalTitle').textContent = mode === 'cancel' ? 'Cancel Order' : 'Request Return';
+    document.getElementById('modalReason').value = '';
+    document.getElementById('modalOverlay').classList.add('open');
+  }
+  function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+
+  async function confirmModalAction() {
+    const reason = document.getElementById('modalReason').value.trim();
+    try {
+      if (modalMode === 'cancel') await OrderAPI.cancel(modalOrderId, reason);
+      else await OrderAPI.requestReturn(modalOrderId, reason);
+      sbToast(modalMode === 'cancel' ? 'Order cancelled' : 'Return requested');
+      closeModal();
+      await loadOrders();
+    } catch (err) { sbToast(err.message || 'Action failed', true); }
+  }
+
+  function renderOrderCard(order) {
+    const canCancel = ['placed', 'packed'].includes(order.status);
+    const canReturn = order.status === 'delivered';
+    const items = order.OrderItems || [];
+
+    return `
+      <div class="order-card">
+        <div class="order-top">
+          <div>
+            <div class="order-num">Order #${order.orderNumber}</div>
+            <div class="order-date">${new Date(order.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+          </div>
+          <span class="status-badge status-${order.status}">${statusLabels[order.status] || order.status}</span>
+        </div>
+
+        ${items.map(item => `
+          <div class="order-item-row">
+            <img src="${item.image || 'https://via.placeholder.com/48x48/fce8ec/e8748a?text=SB'}" onerror="this.onerror=null;this.src='https://via.placeholder.com/48x48/fce8ec/e8748a?text=SB'"/>
+            <span class="oi-name">${item.name}</span>
+            <span class="oi-qty">x${item.quantity}</span>
+            <span class="oi-price">₹${(item.price * item.quantity).toLocaleString('en-IN')}</span>
+          </div>`).join('')}
+
+        <div class="order-total-row">
+          <span>Total</span>
+          <span>₹${order.total.toLocaleString('en-IN')}</span>
+        </div>
+        ${order.estimatedDelivery && !['delivered','cancelled','returned','refunded'].includes(order.status) ? `<div class="order-eta">Estimated delivery: ${new Date(order.estimatedDelivery).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</div>` : ''}
+        ${order.refundStatus && order.refundStatus !== 'not_applicable' ? `<div class="order-eta">Refund status: <b>${order.refundStatus}</b></div>` : ''}
+
+        <div class="action-row">
+          <button class="primary" onclick="OrderAPI.downloadInvoice(${order.id}, 'invoice-${order.orderNumber}.pdf').catch(e=>sbToast(e.message,true))">📄 Invoice</button>
+          ${canCancel ? `<button class="danger" onclick="openModal('cancel', ${order.id})">Cancel Order</button>` : ''}
+          ${canReturn ? `<button onclick="openModal('return', ${order.id})">Request Return</button>` : ''}
+        </div>
+      </div>`;
+  }
+
+  async function loadOrders() {
+    const container = document.getElementById('ordersList');
+    try {
+      const orders = await OrderAPI.mine();
+      if (!orders.length) {
+        container.innerHTML = `<div class="empty">You haven't placed any orders yet. <a href="Home.html">Start shopping →</a></div>`;
+        return;
+      }
+      container.innerHTML = orders.map(renderOrderCard).join('');
+    } catch (err) {
+      container.innerHTML = `<p>${err.message || 'Could not load orders'}</p>`;
+    }
+  }
+
+  loadOrders();
+</script>
+
+</body>
+</html>
